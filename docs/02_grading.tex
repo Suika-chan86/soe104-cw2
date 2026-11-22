@@ -1,0 +1,492 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=2.1cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{B45309}
+\definecolor{muted}{HTML}{6B7280}
+
+\ctexset{
+  section    = {format = {\Large\bfseries\color{accent}}},
+  subsection = {format = {\large\bfseries\color{ink}}},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
+\fancyhead[R]{\small\color{muted}评分体系 · v1.1 · 组内阅读版}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist{itemsep=2pt,topsep=3pt,parsep=0pt}
+\setlength{\parskip}{0.35em}
+\renewcommand{\arraystretch}{1.25}
+
+\newtcolorbox{keybox}[1][]{
+  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{goodbox}[1][]{
+  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+
+\title{\vspace{-1.2cm}\textbf{SOE104 CW2：评分体系}\\[4pt]
+\large 分数从哪来、在哪丢、会不会查重\\[2pt]
+\normalsize 依据 Marking v1.1}
+\author{Group A--E\\\small 整理：A}
+\date{2026-11-22 \quad v2.1}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{keybox}[title={一句话}]
+\textbf{50 分是静态的（写干净就能拿），50 分是跑出来的（策略决定）。}
+但 v1.1 把 Game 那 50 分从“到了就有”改成了“到达 + 状态 + 货物”三份，
+\textbf{死亡第一次真正扣分}。
+顺序仍然是：\textbf{先不翻车，再拿静态分，最后拼 Game。}
+\end{keybox}
+
+\begin{warnbox}[title={重要：所有提交已按新规则重新评分}]
+课程在 11 月 13 日发布 \textbf{Marking v1.1}，官方原话是
+“Every submission is being regraded under the new rules automatically”。
+如果你之前提交过，看到的分数会变——不是 bug，是换了公式。
+\end{warnbox}
+
+%=====================================================================
+\section{总分公式}
+
+\[
+\boxed{\text{FINAL} \;=\; 0.20 \times \text{OOP} \;+\; 0.50 \times \text{Game} \;+\; 0.15 \times \text{Naming} \;+\; 0.15 \times \text{Efficiency}}
+\]
+
+\textbf{四个维度的权重 v1.1 没有变}【U】。变的是 Game 内部怎么算。
+
+Game 部分取 3 个种子的平均，全部由平台自动计算，取\textbf{最新一次提交}。
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{维度} & \textbf{满分} & \textbf{性质} & \textbf{你能控制多少} \\
+\midrule
+OOP Design & 20 & 字节码静态分析 & 完全可控 \\
+Game Outcome & 50 & 三个种子跑出来的结果 & 高度可控（策略质量） \\
+Naming \& Readability & 15 & 静态分析 & 完全可控 \\
+Efficiency & 15 & 平均操作数 & 基本完全可控 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=====================================================================
+\section{Game 50 分：v1.1 的新算法}
+
+\[
+\text{Game} = 40\times\text{arrival} + 30\times\text{condition} + 30\times\text{cargo}
+\]
+
+\begin{warnbox}[title={先分清两把尺子，否则下面的数字一定看错}]
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+& \textbf{Game 分} & \textbf{最终总分（FINAL）} \\
+\midrule
+满分 & 100 & 50（$=0.5\times$Game） \\
+三个分项 & 40 / 30 / 30 & 20 / 15 / 15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{本篇后面凡是没有特别说明的，都是 Game 分（100 分制）。}
+\end{warnbox}
+
+换算成最终总分：\textbf{到达 20 分 + 状态 15 分 + 货物 15 分}。
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{2.2cm}p{5.4cm}p{7.2cm}@{}}
+\toprule
+\textbf{项} & \textbf{定义} & \textbf{含义} \\
+\midrule
+\endhead
+arrival & $\text{miles} \div 2000$ & 走过里程的比例 \\
+condition & \textbf{全体初始成员}在终点时的\textbf{平均血量}；\textbf{死者按 0 计} & 不是“活了几个人”，是“整体多健康” \\
+cargo & $(\text{food}+\text{oxen}+\text{ammo}+\text{parts}) \div 1000$；\textbf{钱不算} & 到达时车上还剩多少实际物资 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{condition 的新语义——这是最大的变化}
+
+旧版是 $\text{survivors}/\text{initial}$：只要人活着，不管多残，都是满分。
+新版是平均血量，死者贡献 0。
+
+\begin{center}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{到达时的状态} & \textbf{condition} & \textbf{拿到的 Game 分（30 分项）} \\
+\midrule
+4 人全活，平均 100 HP & 1.00 & 30.0 \\
+4 人全活，平均 70 HP & 0.70 & 21.0 \\
+3 人全活（100 HP）+ 1 死 & $300/4=0.75$ & 22.5 \\
+2 人全活（100 HP）+ 2 死 & $200/4=0.50$ & 15.0 \\
+全员阵亡 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={死一个人到底损失多少}]
+4 人队死 1 人：condition 最高只能到 $0.75$，即损失 $30\times0.25=7.5$ \textbf{Game 分}，
+折合 \textbf{3.75 分最终总分}——而且这还没算“少一个人干活”的连锁损失。
+
+换算成直觉：\textbf{一条命 $\approx$ 7.5 Game 分 $\approx$ 375 英里的距离分}
+（$375/2000\times40=7.5$ Game 分）。
+\textbf{宁可慢 375 英里，也不要死人。}
+\end{warnbox}
+
+\subsection{cargo 的新语义}
+
+只算四样：\textbf{食物、牛、弹药、零件}。\textbf{钱不算。}
+
+\begin{center}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{到达时} & \textbf{货物单位} & \textbf{拿到的 Game 分（30 分项）} \\
+\midrule
+500 食物 + 80 弹药 + 4 牛 + 2 零件 & 586 & 17.6 \\
+500 食物 + 200 弹药 + 20 零件 + 4 牛 & 724 & 21.7 \\
+1000 单位 & 1000 & 30.0（官方视为“满货”）\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={cargo 怎么理解}]
+官方原话：强队现在落在 \textbf{85 分上下}；要上 95，需要\textbf{同时}做到
+全员活着、接近满血、车上还有价值 1000 单位的货。
+
+也就是说：\textbf{1000 单位是很高的门槛}，正常跑完大约在 500--700。
+所以不要为了 cargo 牺牲 condition——货物 15 分，状态也 15 分，但死一个人是永久扣分。
+\end{keybox}
+
+\subsection{官方的三句解读【U】}
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{到达值 40 分。}仍然是最大的一块，但不再是全部。
+  \item \textbf{死亡现在真的扣分。}每个成员是 condition 项的 $1/N$；丢一个就是 20--33\% 的削减，
+        而幸存者的血量只能补回一部分。
+  \item \textbf{现金不再是货物。}装满没吃完的食物、多余的箭和壮牛，才是“有备而来”的车；
+        一钱包没花掉的硬币只是重。
+\end{itemize}
+
+%=====================================================================
+\section{另外三个维度（未变）}
+
+\subsection{OOP Design —— 20 分}
+
+子量表 100 分：封装 25 / 继承 25 / 多态 25 / 接口 15 / 内聚 10。
+
+官方“优秀”的标准：通过角色类建立清晰层级；命名有意义；完全封装（无 public 字段、受控变更）；
+\textbf{真正的多态}（行为因子类而变，无 \texttt{instanceof} 链、无向下转型）；
+在契约提供接口的地方使用了接口。
+
+\begin{goodbox}[title={怎么稳拿这 20 分}]
+\begin{enumerate}[leftmargin=1.5em]
+  \item 每个成员一个子类，\texttt{extends} 库里的角色类（Hunter / Doctor / Mechanic / Scout）。
+  \item 所有字段 \texttt{private}，常量用 \texttt{private static final}。
+  \item 行为写在各自子类的 \texttt{act()} 里，父类里\textbf{绝不写 \texttt{instanceof}}。
+  \item \texttt{TeamStrategy}、\texttt{TeamResolver} 写成具名类 \texttt{implements} 接口，不要用 lambda。
+  \item 每个类只做一件事。
+\end{enumerate}
+\end{goodbox}
+
+\subsection{Naming \& Readability —— 15 分}
+
+类名 PascalCase，方法/变量 camelCase，名字揭示意图，禁止单字母和含糊缩写。
+\textbf{这是纯白给的分}，写完留 20 分钟统一命名即可。
+
+\subsection{Efficiency —— 15 分}
+
+按平均每种子操作数分档：
+
+\begin{center}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{平均 ops / seed} & \textbf{得分（子项 100）} \\
+\midrule
+$\le 8{,}000$ & 100 \\
+$\le 25{,}000$ & 80 \\
+$\le 60{,}000$ & 60 \\
+其他 & 40 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+官方参考实现约 5,700 ops。正常决策逻辑 100--6,000。这一项抓的是病态计算，不是考验精简。
+
+%=====================================================================
+\section{哪些情况会失分或直接归零}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{6.4cm}p{5.6cm}p{3.0cm}@{}}
+\toprule
+\textbf{情况} & \textbf{后果} & \textbf{严重度} \\
+\midrule
+\endhead
+代码编译失败 & Game $=0$，FINAL 封顶 40 & 致命 \\
+运行中抛未捕获异常（含 \texttt{new Action(null)}） & Game $=0$，FINAL 封顶 40 & 致命 \\
+单种子超过 10 秒墙钟 & Game $=0$，FINAL 封顶 40 & 致命 \\
+用了禁用 API（见 \S\ref{sec:banned}） & \textbf{FINAL $=0$}，提交被拒 & 归零 \\
+\texttt{PartyFactory} 实现不是恰好一个 & 不予评分 & 归零 \\
+\texttt{createMembers()} 返回数量不是 3--5 & 本局失败 & 致命 \\
+提交文件数 0 个或 21 个以上 & 提交被拒 & 归零 \\
+单次回调超过 100,000 ops & 该回合的调用被跳过 & 高 \\
+\texttt{Purchase} 数量为负 & 抛异常 $\rightarrow$ 封顶 40 & 高 \\
+构造器血量不在 0--100 & 抛异常 $\rightarrow$ 封顶 40 & 高 \\
+有 \texttt{package} 声明 & 编译失败 & 致命 \\
+一个文件多个 public class & 编译失败 & 致命 \\
+非 UTF-8 编码 & 乱码 / 编译失败 & 中 \\
+迟交 & 每天 $-5\%$，封顶 $-25\%$ & 高 \\
+队伍间代码相似 & 学术诚信流程 & 归零风险 \\
+被判定 AI 生成 & 设计答辩 $\rightarrow$ 讲不出则学术诚信 & 归零风险 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{禁用 API 清单}\label{sec:banned}
+
+提交前做\textbf{字节码扫描}，命中任意一条直接判 0。
+
+\begin{center}
+\begin{tabular}{@{}p{4.0cm}p{11.0cm}@{}}
+\toprule
+\textbf{类别} & \textbf{禁止内容} \\
+\midrule
+反射 & \texttt{java.lang.reflect.*}、\texttt{Class.forName}、\texttt{java.lang.invoke.*} \\
+子进程 & \texttt{Runtime}、\texttt{ProcessBuilder} \\
+线程 & 创建/启动 \texttt{Thread}、\texttt{java.util.concurrent.*} \\
+类加载 & 自定义 \texttt{ClassLoader} \\
+退出 & \texttt{System.exit} \\
+随机数 & \texttt{java.util.Random}（\texttt{Math.random()} 被插桩成确定性，允许） \\
+引擎状态 & 直接改成员血量、物资、名单（只能通过返回 action/choice 让引擎改） \\
+文件 & \texttt{java.io.*}、\texttt{java.nio.*}（唯一例外：\texttt{System.out}/\texttt{System.err}） \\
+网络 & \texttt{java.net.*} \\
+环境 & \texttt{System.getenv}、\texttt{System.getProperty} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={jar 里有一个陷阱方法}]
+审计 \texttt{oregon-api.jar} 时发现：\texttt{Member} 上有一个 \textbf{\texttt{public final void changeHealth(int)}}，
+但 API Reference 里\textbf{没有写这个方法}。
+
+它属于“直接修改引擎状态”。\textbf{绝对不要在提交的代码里调用它}——
+按禁用清单，这类操作会让提交直接判 0。它大概是给引擎内部用的。
+\end{warnbox}
+
+%=====================================================================
+\section{查重与 AI 检测}
+
+\subsection{查重：查，跨队伍、跨年份}
+
+平台对所有队伍（\textbf{当前和历史的}）持续运行自动代码相似度检测。
+队伍之间互相抄，按学校 Academic Integrity Policy 处理。
+
+\textbf{不要去 GitHub 找往届的 Oregon Trail 实现来“参考结构”。}
+哪怕改了名字，相似度检测也会命中。
+
+\subsection{AI 检测：模式筛查 + 设计答辩}
+
+\begin{center}
+\begin{longtable}{@{}p{3.0cm}p{12.0cm}@{}}
+\toprule
+\textbf{阶段} & \textbf{会发生什么} \\
+\midrule
+\endhead
+筛查 & 自动筛查：\textbf{提交模式} + 代码相似度 \\
+标记 & 被判定“很可能由 AI 完成”的队伍会被 flag \\
+答辩 & 被 flag 的队伍受邀参加\textbf{设计答辩}，必须解释并论证设计决策 \\
+后果 & \textbf{讲不出自己提交的东西}，按 Academic Integrity Policy 处理 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{规则是三条，不是一条}
+
+很多人把“答辩答得出来”当成合规标准。\textbf{不对。} Tasksheet 原文其实是三个独立要求：
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{0.7cm}p{4.0cm}p{4.4cm}p{5.2cm}@{}}
+\toprule
+\textbf{\#} & \textbf{原文} & \textbf{要求什么} & \textbf{答辩能满足吗} \\
+\midrule
+\endhead
+1 & You must not use AI to \textbf{produce} this coursework & \textbf{禁止生成行为} & \textbf{不能}。行为已发生，之后理解多少都改变不了 \\
+2 & ...then \textbf{writing and understanding} every line \textbf{yourselves} & 自己写 + 自己理解 & 只满足“理解”一半 \\
+3 & Please \textbf{cite} any AI assistance (tool and purpose) & \textbf{申报义务} & 无关 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{warnbox}[title={为什么“答得出来就没问题”不成立}]
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{不申报} $\to$ 违反第 3 条，是独立的虚假陈述问题。
+  \item \textbf{申报“AI 生成了 X”} $\to$ 等于书面承认第 1 条。
+  \item \textbf{通过答辩} $\to$ 只说明“没被判定为讲不清”，\textbf{不等于判定为合规}。
+\end{itemize}
+\textbf{不存在任何一种组合能让你处于完全合规的状态。}
+答辩是检测手段，不是豁免机制。
+\end{warnbox}
+
+\subsection{实操判断：AI 的输出是解释，还是代码}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{0.8cm}p{7.4cm}p{6.2cm}@{}}
+\toprule
+& \textbf{做法} & \textbf{判断} \\
+\midrule
+\checkmark & 问“\texttt{final} 修饰符对重写有什么影响”，然后自己写 & 合规 \\
+\checkmark & 问“我这段 \texttt{act()} 有没有漏掉边界”，自己改 & 合规 \\
+\checkmark & 让 AI 解释看不懂的报错，自己修 & 合规 \\
+\midrule
+$\times$ & 让 AI “写一个 Hunter 子类”，读懂后贴进去 & \textbf{不合规} \\
+$\times$ & 让 AI 写完，改改变量名 & \textbf{不合规}，也最容易被模式检测发现 \\
+$\triangle$ & 让 AI 给骨架/签名，自己填空 & \textbf{灰区}，取决于生成比例 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={分界线一句话}]
+\textbf{AI 的输出是“解释”，还是“代码”？}
+前者怎么用都行；后者哪怕只有一段，也已经越线。
+\end{keybox}
+
+\begin{goodbox}[title={我们组的落地规则}]
+\textbf{谁负责的类，谁从空文件开始手打。}
+
+可以用 AI 查 API、问报错、要求 review，但不能让 AI 吐出整个方法体再抄。
+这条比“讲得清”更可验证——\textbf{看 Git 提交历史就知道}：
+一个类如果有多次增量提交、中间还有改错，基本能确认是手写的；
+一次性提交一个完整类，就值得问一句。
+\end{goodbox}
+
+\subsection{必须做的事：申报 AI 使用}
+
+如果确实用了 AI 辅助，\textbf{在代码文件头的注释里写清工具和用途}：
+
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\begin{verbatim}
+/*
+ * AI assistance: Claude (Anthropic), used to explain the
+ * v1.1 starvation rules and to review the runway calculation.
+ * All code written and verified by the team.
+ */
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+%=====================================================================
+\section{提交规则}
+
+\begin{center}
+\begin{tabular}{@{}p{3.6cm}p{11.4cm}@{}}
+\toprule
+\textbf{项} & \textbf{规则} \\
+\midrule
+平台 & 课程自动评分平台（URL 在 LM 上），队伍号 + 初始密码登录 \\
+提交次数 & \textbf{无限次}；只算\textbf{最新一次}；完整历史都会保留 \\
+格式 & 1--20 个 \texttt{.java} 文件，或一个 \texttt{.zip}（只提取 \texttt{.java}） \\
+位置 & 文件必须在压缩包\textbf{根目录}，不能有子目录 \\
+包声明 & \textbf{不能有 \texttt{package}}，所有类在默认包 \\
+文件 & 每个文件\textbf{一个 public class}，UTF-8，单文件 $\le 20$ MB \\
+截止 & 2026-12-13 23:59（中国时间） \\
+硬关闭 & 2026-12-27 23:59，之后完全不能提交 \\
+迟交 & 每天 $-5\%$，累计封顶 $-25\%$ \\
+同伴评价 & 每人在 LM 提交 peer evaluation；个人分可能按贡献调整 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={“只算最新一次”是双刃剑}]
+好消息：可以随便试错，平台还提供 \textbf{Leaderboard}。
+坏消息：\textbf{最后一次如果比上一次差，分数就是差的。}
+\textbf{在 12 月 13 日之前，务必保留一份“已验证能跑”的版本。}
+\end{keybox}
+
+%=====================================================================
+\section{得分优先级：把力气花在哪}
+
+\noindent 下表的「分值」列\textbf{全部是最终总分（FINAL）口径}，加起来是 100。
+
+\begin{center}
+\begin{longtable}{@{}p{0.8cm}p{4.2cm}p{2.4cm}p{2.4cm}p{4.6cm}@{}}
+\toprule
+\textbf{序} & \textbf{目标} & \textbf{FINAL 分值} & \textbf{可控性} & \textbf{失败代价} \\
+\midrule
+\endhead
+0 & 不触发功能闸门 / 不碰禁用 API & —— & 完全可控 & 封顶 40 或直接 0 \\
+1 & OOP + Naming + Efficiency & 50 & 完全可控 & 掉一项就是 5--15 分 \\
+2 & 到达（2000 英里） & 20 & 高 & 少 500 英里 = $-5$ 分 \\
+3 & 状态（不死人、血线高） & 15 & 中 & 死一人 = $-3.75$ 分（且连锁） \\
+4 & 货物 & 15 & 中 & 正常 500--700 单位 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{goodbox}[title={几种典型分数，感受一下重量}]
+\noindent 一笔算例：全员到达（arrival $=1.0$）、平均血 80（condition $=0.8$）、货物 600（cargo $=0.6$）：
+\[
+\text{Game}=40\times1.0+30\times0.8+30\times0.6=82
+\quad\Rightarrow\quad
+\text{FINAL}=50+0.5\times82=\mathbf{91}
+\]
+
+\begin{itemize}[leftmargin=1.4em]
+  \item 静态全满（50）+ Game 100 = \textbf{100}
+  \item 静态全满（50）+ Game 82 = \textbf{91}
+  \item 静态全满（50）+ Game 60 = \textbf{80}
+  \item 静态八成（40）+ Game 90 = \textbf{85}
+  \item 静态全满但崩了（Game $=0$）= \textbf{50}，且被功能闸门封顶到 \textbf{40}
+\end{itemize}
+\textbf{结论：写干净代码的边际收益，比调策略高得多，而且是确定的。}
+\end{goodbox}
+
+%=====================================================================
+\section{常见误解}
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{“自动评分就是只看结果。”} 错。OOP、Naming、Efficiency 共 50 分是静态分析的。
+  \item \textbf{“活着到终点就行。”} 错。v1.1 看平均血量，残血到达会大幅扣 condition。
+  \item \textbf{“钱留着最后算物资。”} 错。cargo 不含现金。
+  \item \textbf{“多提交几次会被扣分。”} 错。无限次，只算最新；但最后一次必须是验证过的版本。
+  \item \textbf{“抄往届的结构不算作弊。”} 错。相似度检测覆盖历史提交。
+  \item \textbf{“用了 AI 但自己改了改就行。”} 错。判定标准是\textbf{你能不能解释}。
+  \item \textbf{“Efficiency 要写得很精巧。”} 错。正常逻辑就是满分区间。
+  \item \textbf{“崩溃了最多扣一点。”} 错。崩溃 = Game 0 + 封顶 40。
+  \item \textbf{“旧版策略还能跑。”} 错。v1.1 改了 10 项数值，旧提交已被重新评分。
+\end{enumerate}
+
+\vfill
+\begin{center}
+\small\color{muted}
+上一份：\texttt{01\_game\_intro.pdf}\quad 下一份：\texttt{03\_plan.pdf}
+\end{center}
+
+\end{document}

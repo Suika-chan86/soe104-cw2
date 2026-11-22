@@ -1,0 +1,300 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=1.9cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{B45309}
+\definecolor{muted}{HTML}{6B7280}
+
+\ctexset{
+  section    = {format = {\large\bfseries\color{accent}}},
+  subsection = {format = {\normalsize\bfseries\color{ink}}},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · 操作手册}
+\fancyhead[R]{\small\color{muted}IntelliJ IDEA 配置}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
+\setlength{\parskip}{0.28em}
+\renewcommand{\arraystretch}{1.2}
+
+\newtcolorbox{stepbox}[1][]{
+  colback=blue!2, colframe=blue!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{keybox}[1][]{
+  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{goodbox}[1][]{
+  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\menu}[1]{\textsf{#1}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries IntelliJ IDEA 配置手册}\\[4pt]
+{\large 打开项目 · 导入 jar · 验证通过}\\[6pt]
+{\small\color{muted}SOE104 CW2 \quad 2026-11-21 \quad 整理：A}
+\end{center}
+
+\vspace{-0.2cm}
+
+\begin{keybox}[title={预期结果}]
+做完这本手册，你应该看到：\textbf{打开 \code{.java} 文件时没有红色波浪线}，
+\code{import edu.soe104.oregon.api.*;} 能自动补全，
+\menu{Build} $\to$ \menu{Build Project} 能成功。
+
+\textbf{注意：你不能在本地运行这个游戏。}jar 里只有接口定义，没有引擎。
+本地只负责“编译通过”，跑游戏只能在平台上。这件事后面还会再强调一次。
+\end{keybox}
+
+%=====================================================================
+\section{第一步：用 Open，不要用 New Project}
+
+\begin{warnbox}[title={这是新手最常犯的错}]
+\textbf{不要点 \menu{New Project}}。那是从零建一个空项目，
+会覆盖掉仓库里已有的目录结构。
+
+我们要做的是\textbf{打开一个已经存在的文件夹}。
+\end{warnbox}
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 先把仓库克隆到本地（见 \texttt{06\_git\_handbook.pdf} 第二节）。
+        假设路径是 \code{D:\textbackslash XJTLU\textbackslash 2026 Y2 S1\textbackslash SOE104\textbackslash CW2\textbackslash soe104-cw2}
+  \item 打开 IDEA，在欢迎界面点 \menu{Open}（不是 New Project）。
+  \item 选中 \code{soe104-cw2} 这个文件夹，点 \menu{OK}。
+  \item 如果弹出 “Trust and Open Project?”，点 \menu{Trust Project}。
+\end{enumerate}
+\end{stepbox}
+
+\begin{goodbox}[title={成功的标志}]
+左侧项目树能看到 \code{src}、\code{lib}、\code{docs} 三个文件夹。
+\end{goodbox}
+
+%=====================================================================
+\section{第二步：设置 JDK 21}
+
+\noindent 课程用 JDK 21。你电脑上可能装了别的版本，要先指定。
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item \menu{File} $\to$ \menu{Project Structure}（快捷键 \code{Ctrl+Alt+Shift+S}）。
+  \item 左侧选 \menu{Project}。
+  \item \menu{SDK} 下拉框：如果有 \code{21}，直接选它，跳到下一步。
+  \item 如果没有，点 \menu{Add SDK} $\to$ \menu{Download JDK}，
+        版本选 \code{21}，Vendor 选 \code{Oracle OpenJDK} 或 \code{Eclipse Temurin}，点 \menu{Download}。
+  \item \menu{Language level} 设为 \code{21}。
+  \item 点 \menu{Apply} $\to$ \menu{OK}。
+\end{enumerate}
+\end{stepbox}
+
+\begin{warnbox}[title={版本不对会怎样}]
+如果 Language level 低于 21，有些语法会报错；
+如果高于 21，本地能编过但平台是 JDK 21，可能出现“本地能跑、平台报错”。
+\textbf{统一用 21。}
+\end{warnbox}
+
+%=====================================================================
+\section{第三步：把 src 标记为源码目录}
+
+\noindent 告诉 IDEA“这个文件夹里是源代码”，否则它不会帮你检查语法。
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 在左侧项目树里，\textbf{右键}点 \code{src} 文件夹。
+  \item 选 \menu{Mark Directory as} $\to$ \menu{Sources Root}。
+  \item 成功后 \code{src} 图标会变成\textbf{蓝色}。
+\end{enumerate}
+\end{stepbox}
+
+%=====================================================================
+\section{第四步：导入 oregon-api.jar（关键步骤）}
+
+\noindent 这一步做完，红色波浪线才会消失。
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item \menu{File} $\to$ \menu{Project Structure}（\code{Ctrl+Alt+Shift+S}）。
+  \item 左侧选 \menu{Libraries}。
+  \item 点中间的 \menu{+} 号 $\to$ 选 \menu{Java}。
+  \item 在弹出的文件选择框里，找到 \code{soe104-cw2\textbackslash lib\textbackslash oregon-api.jar}，
+        选中它，点 \menu{OK}。
+  \item 弹窗问 “Add to module?”，点 \menu{OK}（默认选中当前模块就行）。
+  \item 点 \menu{Apply} $\to$ \menu{OK}。
+\end{enumerate}
+\end{stepbox}
+
+\begin{goodbox}[title={成功的标志}]
+在 \menu{Libraries} 列表里能看到 \code{oregon-api}，展开后有一堆 \code{.class} 文件。
+\end{goodbox}
+
+\begin{warnbox}[title={如果项目树里看不到 lib 文件夹}]
+说明 jar 没被放进仓库。让 A 确认 \code{lib/oregon-api.jar} 已经提交，
+然后你 \code{git pull} 一次。
+\end{warnbox}
+
+%=====================================================================
+\section{第五步：设置 UTF-8 编码}
+
+\noindent 不设的话，中文注释会变乱码，提交到平台可能编译失败。
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item \menu{File} $\to$ \menu{Settings}（\code{Ctrl+Alt+S}）。
+  \item 左侧展开 \menu{Editor} $\to$ \menu{File Encodings}。
+  \item 三个下拉框全部设为 \code{UTF-8}：
+        \begin{itemize}[leftmargin=1.2em]
+          \item \menu{Global Encoding}
+          \item \menu{Project Encoding}
+          \item \menu{Default encoding for properties files}
+        \end{itemize}
+  \item 勾选 \menu{Transparent native-to-ascii conversion}（可选，但建议勾）。
+  \item 点 \menu{Apply} $\to$ \menu{OK}。
+\end{enumerate}
+\end{stepbox}
+
+%=====================================================================
+\section{第六步：验证（做完这一步才算成功）}
+
+\subsection{方法一：看有没有红线}
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 展开 \code{src}，双击任意一个 \code{.java} 文件。
+  \item 看第一行 \code{import edu.soe104.oregon.api.*;} —— \textbf{应该是灰色的，没有红色波浪线}。
+  \item 把光标放到 \code{Member} 上按 \code{Ctrl+B}，能跳转到 \code{.class} 文件就说明 jar 生效了。
+\end{enumerate}
+\end{stepbox}
+
+\subsection{方法二：编译一次}
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 点菜单 \menu{Build} $\to$ \menu{Build Project}。
+  \item 看底部 \menu{Build} 窗口，应该显示 \code{Build completed successfully}。
+\end{enumerate}
+\end{stepbox}
+
+\begin{center}
+\begin{tabular}{@{}p{6.6cm}p{6.6cm}@{}}
+\toprule
+\textbf{你看到的} & \textbf{说明} \\
+\midrule
+\code{Build completed successfully} & \textbf{成功}，可以开始写代码了 \\
+\code{cannot find symbol} & jar 没导进来，回到第四步 \\
+\code{package ... does not exist} & 同上 \\
+\code{invalid source release: 21} & JDK 版本不对，回到第二步 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=====================================================================
+\section{第七步：新建类文件（注意不要建包）}
+
+\begin{warnbox}[title={绝对不要创建 package}]
+课程的提交要求是\textbf{没有 package 声明的默认包}。
+如果你在 IDEA 里新建类时填了包名（比如 \code{com.team}），
+文件第一行会出现 \code{package com.team;}——\textbf{提交会直接编译失败}。
+\end{warnbox}
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 右键点 \code{src} 文件夹 $\to$ \menu{New} $\to$ \menu{Java Class}。
+  \item 在弹出的框里\textbf{只填类名}，例如 \code{TrailHunter}。
+  \item \textbf{不要}在 \code{TrailHunter} 前面加任何路径或包名。
+  \item 点 \menu{Enter}。文件应该在 \code{src} 根目录，而不是某个子文件夹里。
+\end{enumerate}
+\end{stepbox}
+
+\begin{goodbox}[title={正确与错误对比}]
+\textbf{正确：}文件在 \code{src/TrailHunter.java}，第一行是 \code{import ...}\\
+\textbf{错误：}文件在 \code{src/com/team/TrailHunter.java}，第一行是 \code{package com.team;}
+\end{goodbox}
+
+\begin{keybox}[title={IDEA 的一个提示}]
+新建默认包里的类时，IDEA 可能提示 \menu{Warning: class is in the default package}。
+\textbf{这个警告可以忽略}——课程本来就要求默认包。
+\end{keybox}
+
+%=====================================================================
+\section{常见问题}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{5.2cm}p{7.8cm}@{}}
+\toprule
+\textbf{现象} & \textbf{原因与解决} \\
+\midrule
+\endhead
+所有 import 都是红的 & jar 没加。回到第四步 \\
+\code{src} 图标是灰色 & 没标记 Sources Root。回到第三步 \\
+中文注释显示成方框 & 编码不是 UTF-8。回到第五步 \\
+Build 报 \code{invalid source release} & JDK 不是 21。回到第二步 \\
+新建的类跑到子文件夹里 & 建的时候填了包名。删掉重建 \\
+项目树里没有 \code{lib} & 仓库没拉全，\code{git pull} 一次 \\
+找不到 \menu{Project Structure} & 快捷键 \code{Ctrl+Alt+Shift+S}，或 \menu{File} 菜单里找 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+%=====================================================================
+\section{三件不能做的事}
+
+\begin{warnbox}[title={记住这三条}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{不要在本地“运行”游戏。}jar 里没有引擎，\code{main} 方法也没有。
+        点运行只会报错，这不是你的问题。跑游戏只能在平台上。
+  \item \textbf{不要新建 package。}提交必须是无包声明的默认包。
+  \item \textbf{不要改 \code{lib/oregon-api.jar}。}它只读，也不需要改。
+\end{enumerate}
+\end{warnbox}
+
+\begin{keybox}[title={本地和平台的职责划分}]
+\begin{center}
+\begin{tabular}{@{}p{3.0cm}p{4.6cm}p{4.6cm}@{}}
+\toprule
+& \textbf{本地（IDEA）} & \textbf{平台} \\
+\midrule
+语法检查 & \checkmark & — \\
+自动补全 & \checkmark & — \\
+能否编译 & 近似 & 权威 \\
+跑游戏 & \textbf{不能} & \checkmark \\
+禁用 API 扫描 & 不能 & \checkmark \\
+打分 & 不能 & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{keybox}
+
+\vfill
+\begin{center}
+\small\color{muted}
+配套手册：\texttt{06\_git\_handbook.pdf}（Git 一条龙）
+\end{center}
+
+\end{document}

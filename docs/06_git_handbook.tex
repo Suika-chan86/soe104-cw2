@@ -1,0 +1,395 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=1.9cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{B45309}
+\definecolor{muted}{HTML}{6B7280}
+
+\ctexset{
+  section    = {format = {\large\bfseries\color{accent}}},
+  subsection = {format = {\normalsize\bfseries\color{ink}}},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · 操作手册}
+\fancyhead[R]{\small\color{muted}Git 一条龙}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
+\setlength{\parskip}{0.28em}
+\renewcommand{\arraystretch}{1.2}
+
+\newtcolorbox{stepbox}[1][]{
+  colback=blue!2, colframe=blue!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{keybox}[1][]{
+  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{goodbox}[1][]{
+  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Git 一条龙}\\[4pt]
+{\large 不用学 Git，照抄四条命令就行}\\[6pt]
+{\small\color{muted}SOE104 CW2 \quad 2026-11-21 \quad 整理：A}
+\end{center}
+
+\vspace{-0.2cm}
+
+\begin{keybox}[title={先看这一页，你就够了}]
+你\textbf{不需要}理解分支、合并、rebase、PR。
+你只需要记住\textbf{一个循环}，每天重复：
+
+\begin{center}
+\code{git pull} $\longrightarrow$ 写代码 $\longrightarrow$ 编译通过 $\longrightarrow$ \code{git add .} $\rightarrow$ \code{git commit -m "..."} $\rightarrow$ \code{git push}
+\end{center}
+
+下面把每一段拆开讲，但\textbf{能照着第三、四节抄就不用看别的}。
+\end{keybox}
+
+%=====================================================================
+\section{为什么不用分支（一个决定）}
+
+\noindent 团队项目常见做法是“每人一个分支 + 合并前审查”。\textbf{我们不这么做，理由如下：}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.6cm}p{4.4cm}p{5.0cm}@{}}
+\toprule
+\textbf{方案} & \textbf{优点} & \textbf{对我们的问题} \\
+\midrule
+分支 + PR & 隔离风险，可以审查 & 多 6 个步骤、3 个概念；没用过 Git 的人最容易卡在这 \\
+\textbf{直接推 main} & \textbf{4 条命令，一个概念} & 有人推了坏代码，其他人拉下来也坏 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 我们选后者，因为：\textbf{一人一个文件，几乎不会冲突}。
+唯一要防的是“推了编译不过的代码”，这个用一条规矩解决：
+
+\begin{warnbox}[title={唯一的硬规矩}]
+\textbf{本地编译通过，才能 push。}编译不过就留在自己电脑上，不要推。
+
+（第五节给了编译命令，两行，复制粘贴就行。）
+\end{warnbox}
+
+%=====================================================================
+\section{第一次：装好、拉下来（只做一次）}
+
+\begin{warnbox}[title={前置条件：仓库要先由 A 建好}]
+这份手册假设仓库已经存在。在你开始之前，A 必须完成三件事：
+\begin{enumerate}[leftmargin=1.6em]
+  \item 在 GitHub 建一个 \textbf{Public} 仓库，名字建议 \code{soe104-cw2}；
+  \item 目录结构是 \code{src/}、\code{lib/oregon-api.jar}、\code{docs/}，外加一个 \code{.gitignore}；
+  \item 把仓库地址发到群里。
+\end{enumerate}
+\textbf{没收到地址，说明还没建好，先别往下做。}
+完整清单见 \code{05\_proposal.pdf} §1。
+
+\smallskip
+\noindent\textbf{为什么用 Public 而不是 Private：}私有仓库需要逐个邀请协作者，
+邀请链接会过期，5 个人里有几个卡在“我点了但没权限”上，排查成本很高。
+公开仓库直接 clone 就能用，省掉整个邀请环节。
+\end{warnbox}
+
+\begin{warnbox}[title={Public 仓库的一个真实风险：相似度检测是对称的}]
+课程对所有队伍做代码相似度检测，\textbf{而且覆盖历史提交}。
+公开仓库意味着\textbf{任何队伍都能看到你们的代码}。
+
+风险不是“老师看到你们公开了”（这本身不违规），而是：
+\textbf{如果别人抄了你们，检测系统会把你们也标出来}——它判断不出谁抄谁。
+
+缓解办法只有两条，都要做：
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{不要把仓库地址发到课程论坛、群聊以外的公开场合}，也不要在 README 里写课程名；
+  \item \textbf{12-13 提交截止后立刻把仓库转为 Private，或直接删除}。
+        分数已经进了平台，代码不再需要公开。
+\end{enumerate}
+\end{warnbox}
+
+\subsection{装 Git}
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 打开 \url{https://git-scm.com/download/win}，下载 64-bit 安装包。
+  \item 双击安装，\textbf{所有选项保持默认，一路 Next 到底}。
+  \item 装完后打开 \textbf{Git Bash}（开始菜单搜 \code{Git Bash}）。
+  \item 输入 \code{git --version}，出现版本号就成功。
+\end{enumerate}
+\end{stepbox}
+
+\noindent 然后配置一次名字和邮箱（Git 需要知道是谁提交的）：
+
+\begin{stepbox}[title={在 Git Bash 里粘贴，改掉引号里的内容}]
+\begin{verbatim}
+git config --global user.name "你的名字"
+git config --global user.email "你的邮箱@example.com"
+\end{verbatim}
+\end{stepbox}
+
+\noindent{\small\color{muted}用你自己的真实邮箱，和 GitHub 账号一致，方便以后统计贡献。}
+
+\subsection{把仓库拉到本地}
+
+\noindent A 会给你一个仓库地址（形如 \code{https://github.com/xxx/soe104-cw2.git}）。
+
+\begin{stepbox}[title={步骤}]
+\begin{enumerate}[leftmargin=1.8em]
+  \item 在 Git Bash 里进入你放课程文件的目录。
+        \textbf{下面这行只是示例，把路径换成你自己的真实路径}：
+        \begin{verbatim}
+cd "D:/XJTLU/2026 Y2 S1/SOE104/CW2"
+        \end{verbatim}
+        \noindent{\small\color{muted}路径不对会报 \code{No such file or directory}。
+        不确定的话先在文件资源管理器里打开那个文件夹，复制地址栏的路径再粘贴。}
+  \item 克隆（把地址换成 A 给的那个）：
+        \begin{verbatim}
+git clone https://github.com/xxx/soe104-cw2.git
+        \end{verbatim}
+  \item 第一次会弹出一个浏览器窗口让你登录 GitHub，\textbf{点授权就行}。
+  \item 完成后进入目录，看到文件就成功：
+        \begin{verbatim}
+cd soe104-cw2
+ls
+        \end{verbatim}
+\end{enumerate}
+\end{stepbox}
+
+\begin{goodbox}[title={验证成功的标志}]
+\code{ls} 能看到 \code{src}、\code{lib}、\code{docs} 这几个文件夹。
+之后\textbf{所有操作都在这个目录里做}，不要再回到上一级。
+\end{goodbox}
+
+%=====================================================================
+\section{每天开工前：先拉一次}
+
+\noindent 别人可能已经推了新代码，你本地是旧的。\textbf{每天第一件事}：
+
+\begin{stepbox}[title={两条命令（路径同样换成你自己的）}]
+\begin{verbatim}
+cd "D:/XJTLU/2026 Y2 S1/SOE104/CW2/soe104-cw2"
+git pull
+\end{verbatim}
+\end{stepbox}
+
+\noindent 看到 \code{Already up to date.} 或者一串文件名，都正常。
+
+\begin{goodbox}[title={不想每次都打路径}]
+进入一次目录后，输 \code{pwd} 确认位置，然后每次打开 Git Bash 直接
+\code{cd 粘贴路径}。或者右键仓库文件夹 $\to$ \textsf{Open Git Bash here}，直接就在正确位置。
+\end{goodbox}
+
+\begin{warnbox}[title={为什么这条最重要}]
+不 pull 就改代码，push 的时候会被拒绝（\code{rejected}），
+然后你就要处理合并——那是新手最容易卡死的地方。
+
+\textbf{先 pull，再动手}，可以避开 90\% 的麻烦。
+\end{warnbox}
+
+%=====================================================================
+\section{提交：一条龙（核心）}
+
+\subsection{四行命令}
+
+\noindent 写完代码、确认编译通过之后，\textbf{复制这四行}：
+
+\begin{stepbox}[title={提交并推送}]
+\begin{verbatim}
+git add .
+git commit -m "feat: 完成 TrailHunter 的 act 方法"
+git pull
+git push
+\end{verbatim}
+\end{stepbox}
+
+\noindent 逐行说明（看不懂没关系，知道顺序就行）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{5.4cm}p{7.8cm}@{}}
+\toprule
+\textbf{命令} & \textbf{作用} \\
+\midrule
+\code{git add .} & 把你这轮改过的所有文件标记为“要提交” \\
+\code{git commit -m "..."} & 打包成一个记录，引号里写你干了什么 \\
+\code{git pull} & 再拉一次别人的新代码（防止被拒绝） \\
+\code{git push} & 推送到 GitHub，别人就能看到了 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{commit 信息怎么写}
+
+\noindent 格式：\code{类型: 做了什么}。三种类型够用了：
+
+\begin{center}
+\begin{tabular}{@{}lp{10.4cm}@{}}
+\toprule
+\textbf{类型} & \textbf{例子} \\
+\midrule
+\code{feat} & \code{feat: 完成 TrailDoctor 的 act 方法} \\
+\code{fix} & \code{fix: 修正 runway 计算的除零问题} \\
+\code{docs} & \code{docs: 补充 TeamStrategy 的注释} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={什么时候提交}]
+\textbf{一个小功能能编译了，就提交一次。}
+不要攒一天、不要攒到周末。提交越碎，出问题越好回退。
+\end{keybox}
+
+%=====================================================================
+\section{编译验证（push 之前的门槛）}
+
+\noindent 在仓库根目录（有 \code{src} 和 \code{lib} 的那一层）执行：
+
+\begin{stepbox}[title={Windows Git Bash（路径换成你自己的）}]
+\begin{verbatim}
+cd "D:/XJTLU/2026 Y2 S1/SOE104/CW2/soe104-cw2"
+javac -cp "lib/oregon-api.jar" -d out src/*.java
+\end{verbatim}
+\end{stepbox}
+
+\noindent{\small\color{muted}\code{cd} 那行如果已经在仓库目录里，可以省略。}
+
+\begin{center}
+\begin{tabular}{@{}p{4.4cm}p{8.8cm}@{}}
+\toprule
+\textbf{结果} & \textbf{含义} \\
+\midrule
+没有任何输出 & \textbf{编译通过}，可以 push \\
+出现 \code{error:} & 有错误，\textbf{不要 push}，先修 \\
+出现 \code{'javac' 不是内部或外部命令} & 没装 JDK，或 JDK 没加进 PATH \\
+出现 \code{package xxx does not exist} & jar 路径不对，检查 \code{lib/oregon-api.jar} 在不在 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={编译不过绝对不要 push}]
+你推上去的坏代码，别人 \code{git pull} 之后也会坏。
+这是\textbf{唯一会造成全组停工的操作}。
+\end{warnbox}
+
+%=====================================================================
+\section{出问题了怎么办}
+
+\subsection{常见错误对照表}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{4.6cm}p{4.4cm}p{4.2cm}@{}}
+\toprule
+\textbf{你看到的} & \textbf{原因} & \textbf{怎么办} \\
+\midrule
+\endhead
+\code{rejected ... fetch first} & 别人先推了，你本地是旧的 & \code{git pull} 再 \code{git push} \\
+\code{CONFLICT (content)} & 你和别人改了同一行 & \textbf{停下来找 A}，不要自己乱改 \\
+\code{Please tell me who you are} & 没配名字邮箱 & 回到第二节配一次 \\
+\code{Authentication failed} & 登录过期 & 再 \code{git push}，浏览器重新授权 \\
+\code{error: pathspec ... did not match} & 目录不对 & \code{pwd} 看当前在哪，回到仓库根目录 \\
+\code{src/*.java: No such file} & 同上 & 同上 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{我改坏了，想撤回}
+
+\begin{stepbox}[title={改坏了但还没 commit}]
+\begin{verbatim}
+git checkout -- .
+\end{verbatim}
+\noindent 丢掉所有未提交的修改，回到上次 commit 的状态。\textbf{不可恢复，慎用。}
+\end{stepbox}
+
+\begin{stepbox}[title={已经 commit 了但没 push}]
+\begin{verbatim}
+git reset --soft HEAD~1
+\end{verbatim}
+\noindent 撤销上一次 commit，但保留你的代码改动，可以重新提交。
+\end{stepbox}
+
+\begin{warnbox}[title={已经 push 了怎么办}]
+\textbf{不要自己处理。}立刻在群里说，让 A 来处理。
+推上去的东西要回退，牵扯到所有人，自己操作很容易把别人的代码也删掉。
+\end{warnbox}
+
+%=====================================================================
+\section{三条铁律}
+
+\begin{keybox}
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{动手前先 \code{git pull}。}
+  \item \textbf{编译不过绝不 push。}
+  \item \textbf{看到 CONFLICT 就找 A，不要自己解决。}
+\end{enumerate}
+\end{keybox}
+
+\noindent 遵守这三条，你不需要懂 Git 的任何原理。
+
+%=====================================================================
+\section{附：项目的仓库结构}
+
+\begin{center}
+\begin{tabular}{@{}llp{8.2cm}@{}}
+\toprule
+\textbf{路径} & \textbf{提交？} & \textbf{说明} \\
+\midrule
+\code{src/*.java} & 是 & 你们写的 8 个类，\textbf{最终提交到平台的就是这些} \\
+\code{lib/oregon-api.jar} & 是 & 课程给的库，放仓库里方便大家，不用各自下载 \\
+\code{docs/} & 是 & 这几份文档 \\
+\code{out/} & \textbf{否} & 编译产物，已经在 \code{.gitignore} 里排除 \\
+\code{.idea/} & \textbf{否} & IDEA 的配置，同样已排除 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{\code{.gitignore} 的内容}（A 建仓库时放进去，其他人不用管）：
+
+\begin{stepbox}[title={.gitignore}]
+\begin{verbatim}
+out/
+*.class
+.idea/
+*.iml
+\end{verbatim}
+\end{stepbox}
+
+\begin{goodbox}[title={一句话}]
+配好之后，你 \code{git add .} 不会把编译产物和 IDEA 配置加进去。
+\textbf{但 jar 要提交}——它只有 18KB，放在仓库里能让所有人少一步配置。
+\end{goodbox}
+
+\vfill
+\begin{center}
+\small\color{muted}
+配套手册：\texttt{07\_ide\_setup.pdf}（IDEA 配置与导入 jar）
+\end{center}
+
+\end{document}

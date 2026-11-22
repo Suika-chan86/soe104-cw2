@@ -1,0 +1,345 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=1.9cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{B45309}
+\definecolor{muted}{HTML}{6B7280}
+
+\ctexset{
+  section    = {format = {\large\bfseries\color{accent}}},
+  subsection = {format = {\normalsize\bfseries\color{ink}}},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
+\fancyhead[R]{\small\color{muted}会议 Agenda · 2026-11-23}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
+\setlength{\parskip}{0.3em}
+\renewcommand{\arraystretch}{1.22}
+
+\newtcolorbox{stepbox}[1][]{
+  colback=blue!2, colframe=blue!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{keybox}[1][]{
+  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{goodbox}[1][]{
+  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries 会议 Agenda}\\[6pt]
+{\large 2026 年 11 月 23 日 \quad 线上 \quad 30 分钟}\\[4pt]
+{\small\color{muted}Group A--E \quad 只做决定，不讲规则}
+\end{center}
+
+\vspace{-0.1cm}
+
+\begin{keybox}[title={会议成功的标准}]
+不是“大家都听懂了”，而是散会时这四句都能答“是”：
+\begin{enumerate}[leftmargin=1.6em]
+  \item 每个人知道\textbf{这个项目要写的是什么}吗？（不是游戏，是决策程序）
+  \item 每个人知道自己写哪个文件吗？
+  \item 每个人知道\textbf{当天晚上要等 A 建好仓库}吗？
+  \item 每个人知道“讲不清就不推、代码自己手打”吗？
+\end{enumerate}
+\end{keybox}
+
+%=====================================================================
+\section{会前准备}
+
+\begin{center}
+\begin{tabular}{@{}p{1.0cm}p{12.6cm}@{}}
+\toprule
+\textbf{序} & \textbf{做什么} \\
+\midrule
+1 & 看 \code{01\_game\_intro.pdf} 第 1、2、4 页（约 7 分钟） \\
+2 & 看 \code{02\_grading.pdf} 第 1 页（总分怎么拆） \\
+3 & 看 \code{05\_proposal.pdf} §2--§3（分工总表 + 自己那张卡） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent{\small\color{muted}不预习的话，中间 10 分钟会白过——会议不重复讲文档内容。}
+
+%=====================================================================
+\section{议程}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{1.9cm}p{3.4cm}p{6.8cm}p{1.4cm}@{}}
+\toprule
+\textbf{时间} & \textbf{环节} & \textbf{做什么} & \textbf{谁} \\
+\midrule
+\endhead
+0--2 & 开场 & 截止 12-13，还剩 3 周；今天做四个决定 & A \\
+2--7 & \textbf{项目对齐} & 四个问题，\textbf{他们回答}，不是 A 讲 & 全员 \\
+7--12 & \textbf{v1.1 警告} & 只有更新日志是最新的，其他 PDF 全是旧版 & A \\
+12--17 & \textbf{架构} & 共享屏幕看类图：8 个文件、谁继承谁、\code{Plans} 的作用 & A \\
+17--24 & \textbf{分工} & 过 \code{05} 的 §2--§3，逐人确认自己的卡 & 全员 \\
+24--27 & \textbf{工作规则} & 过 \code{05} 的 §7，五条，说完就过 & A \\
+27--29 & \textbf{P0 任务} & 今晚 A 建仓库；其余人明天按签名开工 & 全员 \\
+29--30 & 收尾 & 复述 M1 的时间点 & A \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\noindent{\small\color{muted}分工和工作规则的细节都在 \code{05\_proposal.pdf} 里，会上只做确认，不展开讨论。}
+
+%=====================================================================
+\section{项目对齐（2--7 分钟）}
+
+\begin{warnbox}[title={这一段的关键：不要讲，要问}]
+如果 A 从头讲一遍项目，5 分钟只够讲完“这是什么游戏”，而且讲完没人记得。
+\textbf{改成提问}：四个问题，让大家回答，A 只负责纠正和补一句话。
+
+好处有两个：\textbf{对齐得快}，而且\textbf{能看出谁真的看过文档}。
+\end{warnbox}
+
+\subsection{开场先给一句话（30 秒）}
+
+\begin{keybox}
+“这个项目\textbf{不是让我们做一个游戏}。游戏引擎是他们写好的，在服务器上。
+我们写的是\textbf{一个替玩家做决定的程序}——开局买什么、每回合走多快吃多少、
+遇到事件怎么办、每个人干什么。就这么四件事。
+
+我们看不到游戏画面，改不了引擎。我们只交几个 \code{.java} 文件，
+平台自动编译、自动跑三个种子、自动打分。”
+\end{keybox}
+
+\subsection{四个问题（每个约 1 分钟）}
+
+\noindent 依次问，等回答，不抢答。答完补一句标准答案。
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{0.6cm}p{5.6cm}p{6.6cm}@{}}
+\toprule
+\textbf{\#} & \textbf{问题} & \textbf{标准答案} \\
+\midrule
+\endhead
+Q1 & \textbf{我们交的是什么？}引擎还是我们自己写的游戏？ &
+\textbf{只交我们的决策代码}。引擎已经写好了，在平台服务器上，我们看不见也改不了 \\
+Q2 & \textbf{引擎一共会调用我们几次？分别是什么时候？} &
+\textbf{四个时机}：①开局买物资 ②每回合开始定配速和口粮
+③遇事件选姿态 ④每个活人本回合做一个动作 \\
+Q3 & \textbf{分数怎么算？跑得好就够了吗？} &
+\textbf{不是}。50 分是静态的（OOP 20 + 命名 15 + 效率 15），
+写干净就能拿；另外 50 分才是跑出来的 \\
+Q4 & \textbf{怎样才算赢？只要到终点就满分吗？} &
+\textbf{不够}。Game 分三块：到达 40\% + 状态 30\% + 货物 30\%。
+死一个人、残血到达、车上没货，都扣分 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{答不上来怎么办}
+
+\begin{keybox}[title={这是诊断，不是考试}]
+不要批评，也不要现场补课。记录下来，散会后私发对应页码。
+
+\begin{center}
+\begin{tabular}{@{}p{2.2cm}p{5.6cm}p{5.6cm}@{}}
+\toprule
+\textbf{答不上来} & \textbf{说明什么} & \textbf{散会后} \\
+\midrule
+Q1 & 没看文档，或者概念错位 & 读 01 第 1 节 \\
+Q2 & 不知道调用时机 & 读 01 第 2.3 节 \\
+Q3 & 以为只要跑得好 & 读 02 第 1 节 \\
+Q4 & 以为到了就满分 & 读 01 第 4.2 节 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{keybox}
+
+%=====================================================================
+\section{v1.1 警告（7--12 分钟）}
+
+\noindent\textbf{不要念规则，念三个数字就够：}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{项目} & \textbf{旧} & \textbf{现在} \\
+\midrule
+HUNT 弹药 & 1 发 & \textbf{2 发}（食物产能腰斩） \\
+口粮 MEAGER & 2 食物/人 & \textbf{3 食物/人}（每回合多吃 25\%） \\
+HEAL & 免费 $+10$ & \textbf{3 食物换 $+3$} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={要传达的一句话}]
+“这三条决定了整个策略要重写。而且——\textbf{网上能搜到的攻略、往届的代码，全部作废}，
+连相似度检测也覆盖历史提交，不要去找。”
+\end{warnbox}
+
+\noindent 然后收尾：“四份规则文档：01 规则、02 评分、03 怎么做、04 怎么算最优。今天不用全看，先看 01 的第 2 页。”
+
+%=====================================================================
+\section{架构（12--17 分钟）}
+
+\noindent\textbf{共享屏幕，只看 \code{03} 第 5 页那张类图。只讲三件事。}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.2cm}p{9.4cm}@{}}
+\toprule
+\textbf{讲什么} & \textbf{要点} \\
+\midrule
+\code{Member} 是抽象类，\\另外三个是接口 &
+\code{Member} 有 \code{health} 字段和三个 final getter，必须靠继承；
+接口只描述“能做什么”，而且不占用唯一的继承位 \\
+\code{Plans} 是共享上下文 &
+\code{Resolver} \textbf{看不到车队}，只能靠策略层提前把状态写进 \code{Plans}。
+这是刚需，不是优化 \\
+8 个文件，一人一个 & 避免同时改同一个类；每个人的文件可以独立编译 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={本段禁止展开}]
+不要讲影子价格、事件期望值、阈值怎么定。这些在 \code{04\_decision\_model.pdf} 里，
+会上讲一定超时。
+\end{warnbox}
+
+%=====================================================================
+\section{分工（17--24 分钟）}
+
+\noindent\textbf{打开 \code{05\_proposal.pdf} §2--§3，只看总表，不逐字念卡片。}
+
+每张卡已经提前发给本人了。会上只问一句：
+
+\begin{keybox}
+“\textbf{你那张卡上的‘怎么算做完’，你做得到吗？}”
+\end{keybox}
+
+\noindent 做不到的，当场用 \code{05} §6.2 的兜底方案调整。
+
+\begin{warnbox}[title={三个问题，每人 60 秒，A 记录}]
+点名，不要群问：
+\begin{enumerate}[leftmargin=1.6em]
+  \item “我负责 \_\_\_，我理解它是 \_\_\_。”（说不出来就当场换人）
+  \item “我这里最没把握的是 \_\_\_。”
+  \item “我需要 \_\_\_ 才能开始。”（通常是“要 A 先给签名”或“要仓库地址”）
+\end{enumerate}
+\end{warnbox}
+
+%=====================================================================
+\section{工作规则（24--27 分钟）}
+
+\noindent\textbf{过 \code{05} §7 的五条，说完就过，不展开。}
+
+\begin{center}
+\begin{tabular}{@{}p{0.7cm}p{12.9cm}@{}}
+\toprule
+\textbf{\#} & \textbf{规则} \\
+\midrule
+1 & \textbf{直接推 \code{main}}，不做分支 \\
+2 & \textbf{合并即提交}——每合并一个模块，当天提交一次平台，拿回放 \\
+3 & \textbf{推代码前作者脱稿讲 3 分钟，讲不清不推} \\
+4 & \textbf{自己负责的类，从空文件开始手打}；AI 只用来查 API、问报错、要 review \\
+5 & 每次成功提交打个 tag；12-12 之后冻结逻辑 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={第 3、4 条要明确说出口}]
+“课程会查 AI 生成，被标记要参加设计答辩。但\textbf{答辩只是检测手段，不是豁免}——
+规则禁的是‘让 AI 生成’这个行为，不是你后来懂没懂。
+
+所以我们的做法是：\textbf{每个人自己负责的类，从空文件开始手打。}”
+\end{warnbox}
+
+%=====================================================================
+\section{P0 任务（27--29 分钟）}
+
+\begin{warnbox}[title={今晚的唯一关键动作：A 建仓库}]
+\textbf{整个项目卡在这一步。}没有仓库，其他四个人一行代码都写不了。
+
+A 今晚要做完四件事（约 30 分钟）：
+\begin{enumerate}[leftmargin=1.6em]
+  \item 建 GitHub \textbf{Public} 仓库 \code{soe104-cw2}
+  \item 建 \code{src/}、\code{lib/}、\code{docs/}，放好 \code{oregon-api.jar} 和 \code{.gitignore}
+  \item 写 \code{Plans} 的字段 + getter/setter（\textbf{方法体可以是空的}）
+  \item 把仓库地址发到群里
+\end{enumerate}
+\end{warnbox}
+
+\begin{keybox}[title={其他四人今晚做什么}]
+\textbf{什么都不用写。}没有仓库就没有地方写。
+
+今晚只需要：\textbf{读完自己那张卡}（\code{05} §3），想清楚自己那块要几个方法。
+明早拿到仓库地址，直接 clone 开工。
+\end{keybox}
+
+%=====================================================================
+\section{会后产出}
+
+\begin{center}
+\begin{tabular}{@{}p{4.6cm}p{1.4cm}p{2.8cm}p{4.4cm}@{}}
+\toprule
+\textbf{产出} & \textbf{谁} & \textbf{何时} & \textbf{验收} \\
+\midrule
+仓库建好 + 地址发群里 & A & 今晚 & 5 人都能 clone \\
+分工确认（群里回“确认”） & 全员 & 会后 1 小时 & 5 人都回复 \\
+\code{Plans} 签名定稿 & A & 今晚 & B、D 明天能开工 \\
+各自模块能独立编译 & 全员 & D4（11-27） & 合并前自查 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=====================================================================
+\section{会上不要讨论的六件事}
+
+\noindent 写给自己看。一旦有人起头，就用“这个会后单独聊”挡回去：
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item 具体阈值定多少（\code{LOW\_FOOD} 是 300 还是 350）
+  \item 事件该选 SAFE 还是 RISKY（文档里有公式，但需要回放校准）
+  \item 4 个人还是 5 个人
+  \item 谁的水平够不够（这是分工问题，不是会议议题）
+  \item 要不要用某个设计模式
+  \item 仓库用 Public 还是 Private（已经定了 Public，理由在 \code{06}）
+\end{enumerate}
+
+\begin{keybox}[title={为什么这些必须留到会后}]
+它们都需要\textbf{回放数据}才能判断。会上的讨论只会变成“我觉得”，
+浪费 30 分钟里最宝贵的部分——那部分应该用来让每个人确认自己做什么。
+\end{keybox}
+
+\vfill
+\begin{center}
+\small\color{muted}
+会前材料：\code{01} 规则 \quad \code{02} 评分 \quad \code{03} 方案 \quad
+\code{04} 决策模型 \quad \code{05} 分工提案
+\end{center}
+
+\end{document}

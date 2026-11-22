@@ -1,0 +1,573 @@
+\documentclass[UTF8,11pt,a4paper]{ctexart}
+
+\usepackage[margin=2.1cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{B45309}
+\definecolor{muted}{HTML}{6B7280}
+
+\ctexset{
+  section    = {format = {\Large\bfseries\color{accent}}},
+  subsection = {format = {\large\bfseries\color{ink}}},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
+\fancyhead[R]{\small\color{muted}项目方案 · v1.1 · 组内阅读版}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlist{itemsep=2pt,topsep=3pt,parsep=0pt}
+\setlength{\parskip}{0.35em}
+\renewcommand{\arraystretch}{1.22}
+
+\newtcolorbox{keybox}[1][]{
+  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+\newtcolorbox{goodbox}[1][]{
+  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
+  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
+}
+
+\title{\vspace{-1.2cm}\textbf{SOE104 CW2：我们要做什么}\\[4pt]
+\large 设计思路、代码结构与实施路径\\[2pt]
+\normalsize 依据 Engine v1.1 / 已提供 oregon-api.jar}
+\author{Group A--E\\\small 整理：A}
+\date{2026-11-22 \quad v2.1}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{keybox}[title={这份文档回答三个问题}]
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{逻辑上怎么打赢}：目标怎么量化、决策怎么比较、什么才是“最优”。
+  \item \textbf{代码上怎么组织}：几个文件、几个类、谁继承谁、谁实现谁、谁持有谁。
+  \item \textbf{工程上怎么推进}：先做什么后做什么、每个人负责什么、怎么验收。
+\end{enumerate}
+\end{keybox}
+
+\begin{warnbox}[title={v1.1 带来的三个直接变化}]
+\textbf{1. 现在可以本地编译了。}\texttt{oregon-api.jar} 已提供，IDE 不会再满屏飘红。
+
+\textbf{2. 旧策略全部作废。}事件更频繁（20\%$\to$56\%）、HUNT 更贵（2 弹药）、HEAL 要食物、
+口粮 1/3/6、Doctor 变减伤光环。
+
+\textbf{3. 评分改了。}Game $=40$ 到达 $+30$ 状态 $+30$ 货物，死亡直接扣 condition。
+\end{warnbox}
+
+%=====================================================================
+\section{交付物清单}
+
+\begin{center}
+\begin{tabular}{@{}p{3.8cm}p{2.4cm}p{8.8cm}@{}}
+\toprule
+\textbf{交付物} & \textbf{是否必需} & \textbf{我们的做法} \\
+\midrule
+\texttt{PartyFactory} 实现 & 必需 & \texttt{TeamFactory}，唯一的入口 \\
+\texttt{createMembers()} & 必需 & 返回 4 个成员，每个是不同角色子类 \\
+\texttt{buySupplies()} & 可选 & 自己写，不用经典套装 \\
+\texttt{strategy()} & 可选 & \texttt{TeamStrategy} 具名类 \\
+\texttt{resolver()} & 可选 & \texttt{TeamResolver} 具名类 \\
+成员类 & 必需 & 4 个类，\texttt{extends} 库里的角色类 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%=====================================================================
+\section{本地开发环境（v1.1 新增）}
+
+\subsection{jar 能做什么、不能做什么}
+
+\begin{center}
+\begin{tabular}{@{}p{7.4cm}p{7.4cm}@{}}
+\toprule
+\textbf{能} & \textbf{不能} \\
+\midrule
+语法检查、类型检查、自动补全 & \textbf{运行游戏}（jar 里没有引擎逻辑） \\
+提前发现拼写和签名错误 & 强制禁用 API（只有平台做字节码扫描） \\
+重构、跳转定义 & 给出权威规则（以 Engine Rules Spec 和 changelog 为准）\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={官方原话}]
+“The jar is for syntax and autocomplete. The trail is on the platform.”
+——jar 只是语法和补全，真正的对局在平台。
+\end{keybox}
+
+\subsection{接入方式}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{2.6cm}p{10.0cm}@{}}
+\toprule
+\textbf{环境} & \textbf{步骤} \\
+\midrule
+命令行 & 把 jar 和 \texttt{.java} 放同一目录，\texttt{javac -cp oregon-api.jar *.java} \\
+IntelliJ & New Project（JDK 21）$\to$ File $\to$ Project Structure $\to$ Libraries $\to$ \texttt{+} $\to$ 选 jar \\
+VS Code & 新建 Java 项目（No build tools）$\to$ jar 放 \texttt{lib/} $\to$ Java Projects $\to$ Referenced Libraries $\to$ \texttt{+} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}[title={两个必须注意的点}]
+\textbf{1. 编译通过不等于能提交。}本地 \texttt{javac} 只检查语法；
+禁用 API、包声明、文件数量这些，只有平台会查。
+
+\textbf{2. 不要在提交里带 stubs。}jar 是外部依赖，提交的是你自己的 \texttt{.java}，
+不要为了本地编译把 API 类复制进提交目录——那会产生 \texttt{package} 声明，直接编译失败。
+\end{warnbox}
+
+%=====================================================================
+\section{逻辑设计：怎么找“最优解”}
+
+\subsection{先分清三个层次}
+
+\begin{center}
+\begin{longtable}{@{}p{2.2cm}p{5.0cm}p{7.8cm}@{}}
+\toprule
+\textbf{层次} & \textbf{含义} & \textbf{我们怎么达成} \\
+\midrule
+\endhead
+能编译 & 本地 \texttt{javac} 通过 & 骨架先行（P0）：所有类先写空实现 \\
+能跑完 & 不抛异常、不超时、3 个种子都能播完 & 防御式编程：所有分支都有兜底返回值 \\
+能得分 & 到达 + 状态 + 货物 & 策略设计与参数迭代（P2--P5） \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{v1.1 的三个新约束}
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{食物极度紧张。}4 人 4 牛 MEAGER 每回合 20 食物，500 只够 25 回合；
+        狩猎 2 弹药才产 10 食物（Hunter）。食物是全场第一约束。
+  \item \textbf{回血是奢侈品。}HEAL 花 3 食物只回 3 HP；Doctor 光环减半事件伤害，
+        所以“不让伤害发生”比“受伤后治疗”便宜得多。
+  \item \textbf{死亡是永久扣分。}condition 按初始人数平均，死者记 0。
+        4 人队死 1 个，最高只能拿 75\% 的状态分。
+\end{enumerate}
+
+\subsection{事件策略的核心结论（详见第 4 份文档）}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{2.6cm}p{4.4cm}p{6.2cm}@{}}
+\toprule
+\textbf{事件} & \textbf{v1.1 结论} & \textbf{原因} \\
+\midrule
+RIVER & \textbf{AVOID 恒胜} & 付 \$20+s 太贵，\$25 能买十几单位食物 \\
+STORM & $s\le2$ SAFE，$s\ge3$ AVOID & SAFE 与 RISKY 伤害相同，RISKY 多 15\% 死牛；\\
+     &                        & 但伤害一大，绕 10 英里反而更便宜 \\
+BREAKDOWN & 有 Mechanic 就 SAFE & 免费修理，没有理由选别的 \\
+ILLNESS & $s\le4$ RISKY，$s=5$ 打平 & 比值恒为 $(s+5)/10$，与人数、汇率无关；\\
+         &                          & $s\ge6$ 需再比较 SAFE（公式未公布）\\
+ATTACK & $s\le3$ RISKY，$s\ge4$ AVOID & 花钱逃跑最贵 \\
+THEFT & $s\le2$ SAFE，$s\ge3$ AVOID & 两者差距很小，靠公式算 \\
+BAD\_TRAIL & $s\le4$ RISKY，$s\ge5$ SAFE & 抄近路大概率白赚 5 英里 \\
+HUNT\_OPP & 有弹药就 RISKY & 全场收益最高的事件 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{优化顺序}
+
+\begin{center}
+\begin{longtable}{@{}p{1.0cm}p{4.4cm}p{9.6cm}@{}}
+\toprule
+\textbf{序} & \textbf{做什么} & \textbf{为什么先做这个} \\
+\midrule
+\endhead
+1 & 骨架能编译 & 有了 jar，本地就能验证，这一步很快 \\
+2 & 基线能跑完 & 全 SAFE + 默认配速也要先跑通，拿到第一个回放 \\
+3 & 食物闭环 & 饥饿是唯一会猝死的机制，先解决它 \\
+4 & 里程闭环 & 确认 3 个种子都能到 2000 英里 \\
+5 & 事件策略 & 按上表逐类替换 SAFE \\
+6 & 采购优化 & 商店配比 + 市场交易，依赖前三步的数据 \\
+7 & 参数调优 & 阈值微调，不要早于第 5 步 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{keybox}[title={参数不要超过 8 个}]
+平台可以无限次运行，但每一轮都是“改本地、打包、上传、读回放”，手工成本不低。
+\textbf{超过 8 个可调参数，你调不过来。}
+
+建议只保留：\texttt{LOW\_FOOD}、\texttt{FOOD\_CEILING}、\texttt{LOW\_HEALTH}、
+\texttt{RUNWAY\_FULL}、\texttt{RUNWAY\_BARE}、\texttt{DEFENDER}、\texttt{PACE\_RULE}。
+\end{keybox}
+
+%=====================================================================
+\section{代码设计}
+
+\subsection{文件结构}
+
+8 个文件，远低于 20 个上限。每个文件一个 public class，无 package 声明。
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{3.4cm}p{1.6cm}p{7.6cm}p{2.4cm}@{}}
+\toprule
+\textbf{文件} & \textbf{行数估计} & \textbf{职责} & \textbf{负责人} \\
+\midrule
+\endhead
+\texttt{TeamFactory.java} & 70--90 & \texttt{implements PartyFactory}；组装 \texttt{Plans}、成员、策略、解析器；\texttt{buySupplies()} & A \\
+\texttt{Plans.java} & 50--70 & 共享上下文：本回合状态快照 + 两个布尔开关 & A \\
+\texttt{TeamStrategy.java} & 70--100 & \texttt{implements PartyStrategy}；算 runway、定 pace/ration、写 \texttt{Plans} & B \\
+\texttt{TeamResolver.java} & 130--180 & \texttt{implements Resolver}；九类事件 × 三姿态 & D \\
+\texttt{TrailHunter.java} & 30--45 & \texttt{extends Hunter} & C \\
+\texttt{TrailDoctor.java} & 30--45 & \texttt{extends Doctor}；光环减伤，动作上兼职治疗 & C \\
+\texttt{TrailMechanic.java} & 25--40 & \texttt{extends Mechanic}；负责防守 & C \\
+\texttt{TrailScout.java} & 25--40 & \texttt{extends Scout}；负责探路 & C \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+合计约 430--610 行。官方参考实现 560 行，量级一致。
+
+\subsection{类关系图}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  cls/.style={draw=black!55, rounded corners=2pt, fill=blue!6, align=center,
+              minimum width=2.7cm, minimum height=0.92cm, inner sep=2pt},
+  ifc/.style={draw=black!55, rounded corners=2pt, dashed, fill=orange!12, align=center,
+              minimum width=3.2cm, minimum height=0.92cm, inner sep=3pt},
+  abs/.style={draw=black!55, rounded corners=2pt, fill=violet!10, align=center,
+              minimum width=3.9cm, minimum height=0.92cm, inner sep=3pt},
+  role/.style={draw=black!55, rounded corners=2pt, fill=green!10, align=center,
+               minimum width=2.3cm, minimum height=0.82cm, inner sep=3pt},
+  inh/.style={-{Triangle[open,length=2.6mm,width=2.6mm]}, thick},
+  imp/.style={-{Triangle[open,length=2.6mm,width=2.6mm]}, dashed, thick},
+  cmp/.style={{Diamond[open,length=2.6mm,width=2.2mm]}-, thick},
+  use/.style={-{Stealth[length=2.2mm]}, dashed, thick, black!45},
+  note/.style={draw=black!35, dashed, rounded corners=2pt, fill=black!2,
+               align=left, font=\footnotesize, inner sep=4pt}
+]
+\node[abs]  (member)   at (3.9,0)    {\textbf{Member} (abstract)\\ \scriptsize implements Actable};
+\node[role] (hunter)   at (0.0,-1.9) {Hunter};
+\node[role] (doctor)   at (2.6,-1.9) {Doctor};
+\node[role] (mechanic) at (5.2,-1.9) {Mechanic};
+\node[role] (scout)    at (7.8,-1.9) {Scout};
+\node[cls]  (th)       at (0.0,-3.6) {TrailHunter};
+\node[cls]  (td)       at (2.6,-3.6) {TrailDoctor};
+\node[cls]  (tm)       at (5.2,-3.6) {TrailMechanic};
+\node[cls]  (ts)       at (7.8,-3.6) {TrailScout};
+\draw[inh] (hunter)   -- (member);
+\draw[inh] (doctor)   -- (member);
+\draw[inh] (mechanic) -- (member);
+\draw[inh] (scout)    -- (member);
+\draw[inh] (th) -- (hunter);
+\draw[inh] (td) -- (doctor);
+\draw[inh] (tm) -- (mechanic);
+\draw[inh] (ts) -- (scout);
+\node[ifc] (pf)    at (11.5,0)    {\textbf{PartyFactory}};
+\node[cls] (tf)    at (11.5,-1.9) {TeamFactory};
+\node[cls] (plans) at (11.5,-3.7) {\textbf{Plans}\\ \scriptsize 共享上下文};
+\draw[imp] (tf) -- (pf);
+\draw[cmp] (tf) -- (plans);
+\node[ifc] (ps)    at (15.9,-0.2) {PartyStrategy};
+\node[cls] (tstrat) at (15.9,-2.0) {TeamStrategy};
+\draw[imp] (tstrat) -- (ps);
+\node[ifc] (rv)    at (15.9,-3.9) {Resolver};
+\node[cls] (tres)  at (15.9,-5.7) {TeamResolver};
+\draw[imp] (tres) -- (rv);
+\draw[use] (14.3,-2.0) -- (13.6,-2.0) -- (13.6,-3.5) -- (13.2,-3.5);
+\draw[use] (14.3,-5.7) -- (13.5,-5.7) -- (13.5,-4.2) -- (13.2,-4.2);
+\node[note, anchor=north west] at (-0.6,-4.9) {%
+  \textbf{组合关系}：\texttt{TeamFactory} 持有一个 \texttt{Plans} 实例，\\[1pt]
+  通过构造器交给 \texttt{TeamStrategy} 和 \texttt{TeamResolver}。\\[1pt]
+  \textbf{成员类不依赖 \texttt{Plans}}：它们只用 \texttt{Situation}，\\[1pt]
+  这样成员模块可以独立开发。};
+\end{tikzpicture}}
+\caption{类关系草图。实线三角 = \texttt{extends}；虚线三角 = \texttt{implements}；空心菱形 = 组合。}
+\end{figure}
+
+\subsection{每个类的契约（只给签名，不写实现）}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{3.2cm}p{5.0cm}p{7.0cm}@{}}
+\toprule
+\textbf{类} & \textbf{关键成员} & \textbf{设计要点} \\
+\midrule
+\endhead
+\texttt{TeamFactory} & \texttt{private final Plans plans};\newline
+\texttt{createMembers()}, \texttt{buySupplies()}, \texttt{strategy()}, \texttt{resolver()} &
+唯一的 public 入口；四个方法都返回新对象或 \texttt{List.of(...)}；
+\textbf{不要在这里写决策逻辑} \\
+\texttt{Plans} & 私有字段：\texttt{turn, distance, food, ammo, oxen, parts, money, alive, minHealth, averageHealth, foodScarce, turnsTight} & 所有字段 private，通过 getter/setter 访问 \\
+\texttt{TeamStrategy} & \texttt{decide(PartyState)} &
+纯函数式：只依赖 \texttt{state}，先写 \texttt{Plans}，再返回 \texttt{Directive}；不抛异常 \\
+\texttt{TeamResolver} & \texttt{resolve(Event)} &
+按 \texttt{event.kind()} 分派；每个分支读 \texttt{Plans} 的开关；
+\textbf{任何分支都要有默认返回值} \\
+\texttt{TrailXxx} & \texttt{act(Situation)} &
+每个类只写自己的策略；构造器链到角色类；字段全 private \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{keybox}[title={为什么 \texttt{Plans} 要单独一个类}]
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{让 Resolver 看见车队}——\texttt{resolve()} 只能拿到 \texttt{Event}，这是唯一通道。
+  \item \textbf{给 OOP 加分}——体现组合，是官方明确推荐的模式。
+  \item \textbf{降低耦合}——策略和解析器只认识 \texttt{Plans}，成员只认识 \texttt{Situation}，
+        三方互不引用。\textbf{成员不必依赖 \texttt{Plans}}，是为了让 C 能独立开发。
+\end{enumerate}
+\textbf{不要用 static 字段。}静态可变状态虽然能跑，但内聚分低，也不好测试。
+\end{keybox}
+
+\subsection{设计决策与 OOP 得分的对应}
+
+\begin{center}
+\begin{tabular}{@{}p{8.4cm}p{2.6cm}p{3.2cm}@{}}
+\toprule
+\textbf{设计决策} & \textbf{对应子项} & \textbf{得分} \\
+\midrule
+4 个成员各一个子类，\texttt{extends} 角色类 & 继承 & 25 \\
+行为写在子类 \texttt{act()} 里，无 \texttt{instanceof} & 多态 & 25 \\
+字段全 private，健康/资源只读 & 封装 & 25 \\
+三个实现类都 \texttt{implements} 对应接口 & 接口 & 15 \\
+一个类一件事：工厂只组装、策略只决策 & 内聚 & 10 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{禁区}
+
+\begin{warnbox}[title={写代码时绝对不要做}]
+\begin{enumerate}[leftmargin=1.5em]
+  \item \texttt{instanceof} 链、向下转型——OOP 直接掉档。
+  \item \texttt{public} 字段——封装分归零。
+  \item \texttt{import java.util.Random}——提交直接 0。
+  \item 任何文件读写——提交直接 0。
+  \item 调用 \texttt{member.changeHealth(...)}——这是引擎状态，jar 里能看到但文档没写，调用即违规。
+  \item 在 \texttt{act()} / \texttt{decide()} / \texttt{resolve()} 里抛异常——Game 直接 0。
+  \item \texttt{new Action(null)}——抛异常，Game 0。
+  \item lambda 代替 \texttt{PartyStrategy}/\texttt{Resolver} 实现——合法，但削弱接口与内聚分。
+\end{enumerate}
+\end{warnbox}
+
+%=====================================================================
+\section{实施路径}
+
+\begin{warnbox}[title={时间表已按 11-21 重排}]
+原版把 P0 排在 11-13，那份计划已经过期。下面是\textbf{从 11-21 起的实际排期}，
+\textbf{总工期 22 天}，比原计划少 7 天——所以 P0/P1 必须合并压缩。
+\end{warnbox}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{1.4cm}p{2.6cm}p{3.4cm}p{6.2cm}@{}}
+\toprule
+\textbf{阶段} & \textbf{时间} & \textbf{天数} & \textbf{做什么 / 验收} \\
+\midrule
+\endhead
+P0 & 11-21 -- 11-23 & 3 & 8 个类骨架 + jar 接入 + 第一次提交。
+\textbf{验收：本地编译通过，平台有回放} \\
+P1 & 11-24 -- 11-26 & 3 & 基线能跑完。经典套装、NORMAL+MEAGER、全 SAFE。
+\textbf{验收：3 个种子都不崩} \\
+P2 & 11-27 -- 12-01 & 5 & 食物闭环：runway、狩猎节奏、挨饿降档。
+\textbf{验收：饥饿回合 $\le2$} \\
+P3 & 12-02 -- 12-04 & 3 & 里程闭环：pace 规则、SCOUT/MOVE 补里程。
+\textbf{验收：3 个种子都到 2000 英里} \\
+P4 & 12-05 -- 12-07 & 3 & 事件策略：新 SAFE 成本表落地，九类事件分派。
+\textbf{验收：无死亡，平均血线上升} \\
+P5 & 12-08 -- 12-09 & 2 & 采购与市场优化；参数微调。
+\textbf{验收：condition / cargo 提升，距离不回退} \\
+P6 & 12-10 -- 12-11 & 2 & 代码打磨：命名、封装、注释、AI 申报。
+\textbf{验收：静态分自查表全绿} \\
+P7 & 12-12 & 1 & 答辩排练：每人脱稿讲 3 分钟。\textbf{验收：都讲得出来} \\
+冻结 & 12-13 & 1 & \textbf{只提交已验证的版本，不改逻辑} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+%=====================================================================
+\section{初步想法：基线队伍}
+
+\subsection{阵容}
+
+\begin{center}
+\begin{tabular}{@{}p{3.2cm}p{2.2cm}p{4.4cm}p{4.8cm}@{}}
+\toprule
+\textbf{成员} & \textbf{角色} & \textbf{主要动作} & \textbf{为什么} \\
+\midrule
+TrailHunter & Hunter & HUNT & 10 食物 / 2 弹药，是最高效的产粮方式 \\
+TrailDoctor & Doctor & HEAL + 光环 & \textbf{光环让全队事件伤害减半}，v1.1 必带 \\
+TrailMechanic & Mechanic & DEFEND & 光环让修理免费；固定防守者 \\
+TrailScout & Scout & SCOUT & $+6$ 英里零成本，天然加速 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{为什么是 4 个人：}动作用得越多，吃的也越多（MEAGER 每人 3 食物）。
+4 人是“够分工 + 养得起”的平衡点。5 人每回合多 3 食物，在 v1.1 里是很大的负担。
+
+\begin{warnbox}[title={Doctor 现在是必带，不是可选}]
+v1.1 的 Doctor 光环是\textbf{全队事件伤害减半}。事件概率从 15--43\% 涨到 20--56\%，
+如果没有 Doctor，整局的 HP 支出会翻倍。而普通 HEAL 已经从“免费 +10”砍到“3 食物换 +3”。
+\textbf{没有 Doctor 的队伍在 v1.1 里几乎不可能跑完。}
+\end{warnbox}
+
+\subsection{初始参数（全部是待调值）}
+
+\begin{center}
+\begin{tabular}{@{}p{4.4cm}p{2.0cm}p{8.6cm}@{}}
+\toprule
+\textbf{参数} & \textbf{初值} & \textbf{含义} \\
+\midrule
+\texttt{LOW\_FOOD} & 300 & 低于此值，Hunter 优先狩猎 \\
+\texttt{FOOD\_CEILING} & 470 & 高于此值不狩猎（防满仓浪费弹药） \\
+\texttt{LOW\_HEALTH} & 50 & 低于此值，Doctor 优先治疗 \\
+\texttt{RUNWAY\_FULL} & 5 & runway 高于此值且血低时才升 FULL \\
+\texttt{RUNWAY\_BARE} & 3 & runway 低于此值降 BARE \\
+\texttt{TURNS\_TIGHT} & 1.15 & 需求里程/基础里程超过此比例，开 GRUELING \\
+\texttt{DEFENDER} & Mechanic & 固定防守者 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{配速与口粮规则}
+
+\begin{center}
+\begin{minipage}{0.92\textwidth}
+\begin{verbatim}
+turnsLeft = 120 - turn
+milesNeededPerTurn = (2000 - distance) / turnsLeft
+if milesNeededPerTurn > 20  -> GRUELING
+else                        -> NORMAL
+
+runway = food / (3 * alive + 2 * oxen)
+if runway < 3                        -> BARE
+else if averageHealth < 50 && runway > 5 -> FULL
+else                                 -> MEAGER
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+\begin{keybox}[title={为什么“付不起就降档”不是懦弱}]
+BARE 每人每回合 $-1$ HP；挨饿第一回合就是 $-5$。\textbf{降档永远比挨饿便宜。}
+但注意 v1.1 里 MEAGER 是 3 食物，BARE 是 1，差距 2 食物/人——降档省的更多，也更常需要。
+\end{keybox}
+
+%=====================================================================
+\section{分工建议（不变）}
+
+\begin{warnbox}[title={风险仍在 AI 使用，不在 Java 水平}]
+问卷里 C、D、E 三位都勾了“AI 使用：D（比较依赖）”。课程明确：
+\textbf{被判定“很可能由 AI 完成”会触发设计答辩，讲不出自己的代码按学术诚信处理。}
+
+这不是“小心一点”能解决的，需要制度：每人只写自己负责的模块、合并前本人讲解、
+AI 只用于解释和审查。
+\end{warnbox}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{1.0cm}p{3.6cm}p{3.6cm}p{6.6cm}@{}}
+\toprule
+\textbf{人} & \textbf{问卷情况} & \textbf{建议负责} & \textbf{理由与要求} \\
+\midrule
+\endhead
+A & C；CW1 独立 100/100；Maven/Git & \texttt{TeamFactory} + \texttt{Plans} + 集成 + 提交 & 负责架构和最终合并；必须能讲清整体数据流 \\
+B & C；学过都熟悉 & \texttt{TeamStrategy} & 纯函数式，最容易独立验证；能解释每个阈值 \\
+C & C；Git/GitHub & 4 个成员类 & 继承与多态的最佳练习 \\
+D & B & \texttt{TeamResolver} & 规则明确但工作量大；能对照事件表讲清每个分支 \\
+E & B；Git/GitHub & 采购方案 + 事件矩阵核对 + 回放分析 & 掌握“事实来源”，和 D 结对 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{Git 用法}：\textbf{直接推 \texttt{main}}，不做分支。一人一个文件，冲突风险低；
+        分支 + PR 对没用过 Git 的人是额外 6 个步骤，得不偿失。操作见 \texttt{06\_git\_handbook.pdf}。
+  \item \textbf{合并即提交}：每合并一个模块，当天提交一次，拿到回放。\textbf{不要攒到最后}。
+  \item \textbf{提交前自查表}：无 package、每文件一个 public class、无禁用 API、成员数 3--5。
+  \item \textbf{讲解制}：推代码前，作者用 3 分钟脱稿讲自己这段。讲不清就不推。
+  \item \textbf{手打制}：\textbf{自己负责的类，从空文件开始写。}
+        AI 可以查 API、问报错、要 review，\textbf{不能吐出方法体让人抄}。
+        可验证性在于：一个类如果有多次增量提交、中间改过错，基本能确认是手写的。
+  \item \textbf{保留已验证版本}：每次成功提交后打个 tag。
+\end{enumerate}
+
+\begin{warnbox}[title={为什么“讲得清”还不够}]
+Tasksheet 把规则拆成三条独立要求：\textbf{不许让 AI 生成}、\textbf{自己写并理解}、\textbf{申报 AI 使用}。
+答辩只检验第二条（理解），\textbf{不豁免第一条}。
+
+所以“答得出来就行”是错的——它既不能消除已经发生的生成行为，
+也不能替代申报义务。详见 \texttt{02\_grading.pdf} 的 AI 政策一节。
+\end{warnbox}
+
+%=====================================================================
+\section{风险清单}
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{0.8cm}p{4.4cm}p{1.8cm}p{7.6cm}@{}}
+\toprule
+\textbf{\#} & \textbf{风险} & \textbf{概率} & \textbf{缓解措施} \\
+\midrule
+\endhead
+1 & 参考 PDF 仍是 v1.0，规则以更新公告为准 & 已发生 & 冲突处以 Trail Update 为准；不确定的公式标“待确认” \\
+2 & C/D/E 的 AI 依赖触发设计答辩 & 中高 & 讲解制 + 一人一模块 + AI 只用于解释 \\
+3 & Java 水平断层，D/E 写不出 & 中 & D/E 做规则明确的部分；结对审查 \\
+4 & 依赖 A 过多，A 成为瓶颈 & 中 & P0 后 A 只做集成；其他模块独立可编译 \\
+5 & 只算最新提交，最后一次翻车 & 中 & 12-12 后冻结逻辑；保留已验证版本 \\
+6 & 参数太多调不过来 & 高 & 限制在 8 个以内；每次只改一个 \\
+7 & 食物模型估算错误导致全员饿死 & 高 & P2 单独验证食物闭环，不和其他改动混在一起 \\
+8 & 事件策略过拟合到 3 个种子 & 中 & 规则基于机制而非具体回合；不写死回合数 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+%=====================================================================
+\section{待确认}\label{sec:pending}
+
+\begin{center}
+\begin{longtable}{@{}p{0.8cm}p{7.0cm}p{6.8cm}@{}}
+\toprule
+\textbf{\#} & \textbf{事项} & \textbf{影响} \\
+\midrule
+\endhead
+1 & ILLNESS 的 SAFE 新公式（“scales with how sick everyone is”） & 影响 ILLNESS 决策表 \\
+2 & 事件概率公式（只知道 20\% $\to$ 56\%） & 影响事件预算与期望计算 \\
+3 & 严重度新公式（只说“climbs even higher”） & 影响分段阈值 \\
+4 & HUNT 产出是否仍为 7/10（只说了弹药 2 发） & 影响食物模型 \\
+5 & BAD\_TRAIL 的 SAFE 是否仍扣 5 食物 & 影响该事件比较 \\
+6 & Doctor 光环“减半”的取整方式 & 影响伤害计算 \\
+7 & cargo 是否封顶在 1000 & 影响物资投入的边际收益 \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\vfill
+\begin{center}
+\small\color{muted}
+配套文档：\texttt{01}（规则）\quad \texttt{02}（评分）\quad \texttt{04}（决策模型）\quad
+\texttt{05}（分工与进度提案）
+\end{center}
+
+\end{document}
