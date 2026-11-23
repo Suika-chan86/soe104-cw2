@@ -89,4 +89,53 @@ git push
 编译输出和本机 IDE 配置由 \code{.gitignore} 排除。
 暂存时还应核对是否混入凭据或无关改动。提交说明可用 \code{feat:}、\code{fix:} 或 \code{docs:}。
 
+\clearpage
+\section{看到 Git 输出后怎么判断}
+
+\subsection{开工前看目录和分支}
+
+在终端不知道自己到了哪一层时，先打印仓库根目录，再看当前分支和改动。
+首次克隆后看到 \code{src/}、\code{lib/}、\code{docs/} 即可对照目录。
+
+\begin{lstlisting}
+git rev-parse --show-toplevel
+git status --short --branch
+\end{lstlisting}
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{4.35cm}Y@{}}
+\toprule
+看到的输出 & 含义与下一步 \\
+\midrule
+\code{not a git repository} & 当前目录不在仓库。进入克隆出的目录后再查。 \\
+\code{?? docs/note.tex} & 文件已经存在，Git 还没跟踪。确认为本次交付内容再暂存。 \\
+\code{main...origin/main [ahead 1]} & 根据本地远端记录，当前分支多一个本地提交。
+若再提交一个文档改动，直接推送可能会把两个一起带上。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{改完后分别检查工作区、暂存区和待推送提交}
+
+以只更新一份文档为例，按实际情况指定 LaTeX 源和重新生成的 PDF。逐条查看输出。
+
+\begin{lstlisting}
+git diff -- docs/03_plan.tex
+git add -- docs/03_plan.tex docs/03_plan.pdf
+git diff --cached --stat
+git diff --cached --check
+\end{lstlisting}
+
+如果误把 PDF 暂存到另一项改动，执行
+\code{git restore --staged -- docs/03\_plan.pdf} 只取消暂存，文件仍保留在工作区。
+提交后可刷新远端记录并列出当前分支计划推送的提交。例子使用已设置上游的分支。
+
+\begin{lstlisting}
+git fetch origin
+git log --oneline "@{upstream}..HEAD"
+\end{lstlisting}
+
+\noindent 清单里每一项都属于本次打算发布的范围，再执行 \code{git push}。
+遇到不认识的旧提交或分叉，先核对来源和责任人。
+
 \end{document}

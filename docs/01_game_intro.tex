@@ -82,28 +82,62 @@
 \code{BREAKDOWN} 的 \code{SAFE} 修理。Driver 的光环作用于艰难配速。
 这三类光环各自不叠加。 \source{TU} \source{ER}
 
+\subsection{读回放时，按这个顺序核对}
+
+例如四人四牛在回合开始时有 30 食物，普通口粮（\code{MEAGER}）喂完车队后剩 10。
+随后遇到严重度 4 的失窃，选择 \code{SAFE} 扣 9 食物，车里只剩 1。
+如果猎人有 2 发弹药，本轮狩猎后可把粮补到 11。这个回合队员已经吃饱，
+但下次要继续用普通口粮，四人至少要有 12 食物，连牛一起则要 20。
+回放上看到的「仓里只剩一点粮」，要和\textbf{发生在哪个阶段}一起读。 \source{DER}
+
+\begin{keybox}{三个容易看错的动作结果}
+\begin{itemize}
+  \item 499 食物时狩猎，食品仓位只够再加 1，弹药仍扣 2 发。
+  \item 成员吃不饱的回合，\code{HEAL} 和 \code{REST} 无效，狩猎仍能补给。
+  \item 受威胁且需要防守时，一人使用 \code{DEFEND} 即可，队员各自最多恢复到 100 HP。
+\end{itemize}
+\end{keybox}
+
+\clearpage
 \section{事件与交易}
 
 1.1 公告给出的事件率从旅途前期约 20\% 上升到后期约 56\%，
-严重度为 1--10。完整的新概率与严重度分布尚待确认。
-\source{TU} \source{API}
+完整的新版概率曲线尚待核验。表中 $s$ 是事件传来的严重度（1--10）。
+伤害为减伤前每人值。仓位限制获得的食物，现有库存限制实际扣粮。
+河流与袭击的付费选项在钱不够时会转为 \code{AVOID}。 \source{TU} \source{ER} \source{API}
 
-\begin{itemize}
-  \item 八种通常事件为河流 \code{RIVER}、风暴 \code{STORM}、故障 \code{BREAKDOWN}、
-  疾病 \code{ILLNESS}、袭击 \code{ATTACK}、狩猎机会 \code{HUNT\_OPP}、
-  坏路 \code{BAD\_TRAIL}、失窃 \code{THEFT}。通常选择 \code{SAFE}、\code{RISKY} 或 \code{AVOID}。
-  \item 河流和袭击的付费 \code{SAFE} 选项付不起时自动降为 \code{AVOID}。
-  风暴的 \code{SAFE} 和 \code{RISKY} 直接伤害相同，后者多失牛风险。
-  若伤害代价或死亡风险偏高，可以比较绕道。
-  \item 第九种事件 \code{TRADER} 使用买、卖、议价买、议价卖或离开。
-  每次一笔交易。买入受钱包、50 单位及食品仓位约束；
-  议价失败时不成交。
-\end{itemize}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{2.55cm}Y Y L{2.25cm}@{}}
+\toprule
+事件 & SAFE & RISKY & AVOID \\
+\midrule
+\code{RIVER} & 付 $20+s$ 美元 &
+$s/10$ 概率掉 10 HP 和 20 粮，另有 20\% 失牛检定 & 损失 5 英里 \\
+\code{STORM} & 掉 $s$ HP & 相同伤害，另有 15\% 失牛风险 & 损失 10 英里 \\
+\code{BREAKDOWN} & 有机械师免零件，否则用 1 件；无零件时按绕行处理 &
+$s/10$ 概率掉 5 HP 并失 1 零件 & 损失 15 英里 \\
+\code{ILLNESS} & 随严重度变化，精确成本待确认 &
+$s/10$ 概率掉 $s+5$ HP & 掉 $s$ HP \\
+\code{ATTACK} & 付 $20+s$ 美元，失 10 粮 & 掉 $s$ HP & 损失 15 英里 \\
+\code{HUNT\_OPP} & 用 2 发，最多得 20 粮 & 用 4 发，最多得 50 粮；$s/10$ 概率掉 5 HP & 放弃 \\
+\code{BAD\_TRAIL} & 损失 $6+s$ 英里；旧版扣 5 粮是否保留待核 &
+$s/10$ 概率失败并掉 $s$ HP，失败时另有 15\% 失牛风险；否则加 5 英里 & 损失 20 英里 \\
+\code{THEFT} & 失 $5+s$ 粮 & 各半概率掉 5 HP，或失 20 粮和 \$20 & 失 \$15 \\
+\bottomrule
+\end{tabularx}
+\end{center}
 
+\noindent 河流和坏路的失牛检定细节仍需通过回放核验。
+
+\subsection{商店与交易站}
 开局商店只买不卖，钱包 \$2,000。每单位粮、弹药、零件、牛分别为
 \$2、\$3、\$30、\$80。经典篮子为 500 粮、80 弹、2 零件、5 牛，余 \$300。
-现金还有途中购买和付费用途，终局货物只计粮、牛、弹药、零件。
-\source{ER} \source{TU}
+采购清单按顺序扣钱，超出余额或仓位时会裁剪。 \source{ER}
+
+途中遇到 \code{TRADER} 时可买、卖、议价或离开，每次只做一笔交易。
+严重度 1--3 为便宜档、4--6 为正常档、7--10 为贵档。按事件给的报价算账。
+买入最多 50 单位，受钱包和仓位限制；卖出不能超过库存。议价失败则不成交。
+例如仓里有 490 粮、现金 \$12，挂牌粮价 \$2，申请买 50 也只买到 6。 \source{ER} \source{DER}
 
 \medskip
 \noindent 事件成本与可达性计算见\docref{04_decision_model}{《04 决策模型》}，

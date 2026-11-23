@@ -74,12 +74,36 @@ $\le60{,}000 \Rightarrow60$、更高 $\Rightarrow$ 至多 40（效率子项分�
 \bottomrule
 \end{tabularx}
 \end{center}
-禁用项包括反射与动态调用、自定义类加载器、子进程、线程和并发库。
-也禁止文件与网络访问、环境和系统属性读取、\code{System.exit}、\code{java.util.Random}，
-以及直接修改引擎的健康、资源或名单。
-\code{System.out} 控制台输出是题面明示的例外。平台允许并确定化
-\code{Math.random()} 与时间 API。成员动作、策略指令与解析结果由引擎执行。
-\source{TASK} \source{ER}
+\subsection{源码审查时具体看什么}
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{3.45cm}Y@{}}
+\toprule
+类别 & 用于审查的例子 \\
+\midrule
+反射与类加载 &
+\code{java.lang.reflect.*}、\code{Class.forName}、\code{java.lang.invoke.*} 和自定义 \code{ClassLoader}。 \\
+进程、退出和并发 &
+进程和退出相关的 \code{Runtime}、\code{ProcessBuilder}、\code{System.exit}。
+\newline 启动线程和使用 \code{java.util.concurrent.*} 也在禁用范围内。 \\
+系统环境与 I/O &
+\code{System.getenv}、\code{System.getProperty}、文件和网络访问，例如
+\code{java.io.*}、\code{java.nio.*}、\code{java.net.*}。题面明示的 I/O 例外为 \code{System.out} 控制台输出。 \\
+随机数与引擎状态 &
+\code{java.util.Random} 禁用。\code{Math.random()} 与时间 API 由平台确定化。
+行为通过返回对象交给引擎结算，禁止直接修改成员健康、物资和名单。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}{区分三个经常混在一起的结果}
+队伍正常结束但没到终点时，按走过的距离与终局状态计分。
+编译失败、崩溃或超时触发功能门槛。例如得不到有效 \code{Action} 类型时，
+\code{new Action(null)} 会抛异常。命中禁用 API 则会被拒并计零分。
+本地编译通过后，仍需看平台回放和反馈。 \source{TASK} \source{ER}
+\end{keybox}
+
+\clearpage
 
 \section{提交清单}
 
@@ -95,6 +119,10 @@ $\le60{,}000 \Rightarrow60$、更高 $\Rightarrow$ 至多 40（效率子项分�
   个人分可能按贡献调整。 \source{TASK} \source{ER}
 \end{enumerate}
 
+\noindent 打包时先打开 ZIP 核对层级，例如 \code{TeamFactory.java} 应在压缩包根目录，
+无需先打开 \code{src/} 子目录。如果保留了课程示例的另一份 \code{PartyFactory}，
+打包本组版本前要把示例排除。记录提交对应的 Git 版本，确认三个种子都有可核对的回放。
+
 \section{学术诚信和 AI 辅助}
 
 \begin{warnbox}{作者写代码，并能说明设计依据}
@@ -107,6 +135,13 @@ $\le60{,}000 \Rightarrow60$、更高 $\Rightarrow$ 至多 40（效率子项分�
 被标记的队伍可能受邀做设计答辩，解释不了自己的提交将按学校学术诚信政策处理。
 团队复核时，可让作者结合一个正常用例和一个边界例解释设计，提交记录只用于追溯改动。
 \source{TASK}
+
+\noindent 若用 AI 辅助，按实际情况在代码文件头记录。例如使用某工具理解接口说明时，
+可以写下工具名和所问的具体主题。把括号内的内容换成真实信息。
+\begin{lstlisting}
+/* AI assistance: [tool name], used to clarify
+   [the API rule or Java concept discussed]. */
+\end{lstlisting}
 
 \medskip
 \noindent 资料口径：\source{TU} Trail Update 1.1；\source{TASK} CW2 Tasksheet

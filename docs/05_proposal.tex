@@ -2,6 +2,12 @@
 \newcommand{\DocTitle}{分工与进度提案}
 \newcommand{\DocSubtitle}{负责人、交接与提交时间线}
 \input{cw2-docs.tex}
+\usepackage{tikz}
+\newcommand{\timelinebar}[5]{%
+  \filldraw[fill=#4!13,draw=#4!52,rounded corners=2pt,line width=0.35pt]
+    ({#1+0.045},{#3-0.24}) rectangle ({#2-0.045},{#3+0.24});
+  \node[font=\footnotesize,text=ink,inner sep=0pt] at ({(#1+#2)/2},#3) {#5};
+}
 
 \begin{document}
 \maketitle
@@ -50,6 +56,44 @@ E & 规则核对与回放分析 & 采购核算、边界用例、配对回放记�
 \clearpage
 \section{内部排期}
 
+\begin{center}
+\begin{tikzpicture}[x=1.94cm,y=1cm]
+  \fill[black!2] (0,-0.76) rectangle (8,0.12);
+  \fill[red!5] (7,-3.94) rectangle (8,0.12);
+  \foreach \column in {0,...,8}
+    \draw[black!18,line width=0.35pt] (\column,0.12) -- (\column,-3.94);
+  \foreach \y in {0.12,-0.76,-1.40,-2.04,-2.68,-3.32,-3.94}
+    \draw[black!18,line width=0.35pt] (0,\y) -- (8,\y);
+  \foreach \column/\dates in {
+    0/{11-23},1/{11-24 至\\11-26},2/{11-27},3/{11-28},
+    4/{11-29 至\\12-01},5/{12-02 至\\12-10},6/{12-11 至\\12-12},
+    7/{12-13\\23:59}}
+    \node[font=\footnotesize\bfseries,text=ink,align=center,inner sep=0pt]
+      at ({\column+0.5},-0.32) {\dates};
+  \foreach \y/\person in {-1.08/A,-1.72/B,-2.36/C,-3.00/D,-3.64/E}
+    \node[font=\small\bfseries,text=ink,anchor=east] at (-0.04,\y) {\person};
+  \timelinebar{0}{1}{-1.08}{accent}{权限、接口}
+  \timelinebar{1}{2}{-1.08}{accent}{组装、采购}
+  \timelinebar{2}{3}{-1.08}{accent}{整体集成}
+  \timelinebar{3}{4}{-1.08}{accent}{提交基线}
+  \timelinebar{4}{5}{-1.08}{accent}{整合修正}
+  \timelinebar{5}{6}{-1.08}{accent}{协调迭代}
+  \timelinebar{6}{7}{-1.08}{accent}{验收冻结}
+  \timelinebar{7}{8}{-1.08}{accent}{核对提交}
+  \timelinebar{1}{3}{-1.72}{linkink}{配速、口粮与快照}
+  \timelinebar{4}{6}{-1.72}{linkink}{按回放修正供餐与里程}
+  \timelinebar{1}{3}{-2.36}{linkink}{四个成员的动作}
+  \timelinebar{4}{6}{-2.36}{linkink}{按回放修正狩猎与治疗}
+  \timelinebar{1}{3}{-3.00}{linkink}{事件分支与回退}
+  \timelinebar{4}{6}{-3.00}{linkink}{按回放修正事件与交易}
+  \timelinebar{1}{3}{-3.64}{linkink}{采购核算与边界核对}
+  \timelinebar{3}{6}{-3.64}{linkink}{保存基线回放，比较改动前后的表现}
+  \timelinebar{6}{7}{-3.64}{linkink}{复核候选}
+\end{tikzpicture}
+\par\smallskip
+{\small\color{muted}列按阶段排列，宽度与天数无关。最右列为课程截止时间（中国时间）。}
+\end{center}
+
 \begin{center}\small
 \begin{tabularx}{\linewidth}{@{}L{2.9cm}L{3.45cm}Y@{}}
 \toprule
@@ -78,5 +122,44 @@ E & 规则核对与回放分析 & 采购核算、边界用例、配对回放记�
   \item 模块卡住时先确认缺的接口、样例或回放，再决定结对、拆任务或调整负责人。
   把变更同步到此表和会议记录。
 \end{itemize}
+
+\clearpage
+\section{第一次交接怎么验收}
+
+拿到负责范围后，每人可以先准备一份最小交付物和一个边界用例。交接时把两者放在一起，
+接手的人就能判断接口是否可用，也知道出了问题从哪里查。
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{2.0cm}Y Y@{}}
+\toprule
+交接 & 交出去什么 & 接手人怎样核对 \\
+\midrule
+A 给 B、D &
+能编译的构造器与快照接口。附一份例子，标明哪些值在回合初读取，哪些值是给事件用的预测。 &
+B 能发布本轮指令对应的快照；D 能确认回合号并识别缺失记录。 \\
+B 给 D &
+一条正常快照与第 120 回合用例。附牛少一头时如何判断余程。 &
+第 120 回合在策略阶段仍可行进一次。到事件阶段，当前行进已经结算，仍可有成员动作里程。 \\
+C 给 A、E &
+四个成员类的动作说明，外加两例。食物 499 时狩猎会怎样，粮不够时医生如何取舍。 &
+A 检查工厂组装和整体编译。E 看回放里的实际存粮与动作，记录和预期不符的回合。 \\
+D 给 E &
+事件分支表，附一个付不起渡船费的例子、一个缺快照的例子。 &
+对照 \docref{01_game_intro}{《01 游戏与规则》}核对引擎结果，按
+\docref{04_decision_model}{《04 决策模型》}检查我们的判断和兜底。 \\
+E 给全员 &
+三种子的版本对比。每条问题写清版本、种子、回合、观察和预期。 &
+作者能定位问题，并说明准备改哪条规则、改后观察哪个指标。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keybox}{回放记录写到能复查}
+例如记录「版本、种子、回合：待填。观察：猎人行动前有 499 粮，本次打猎花 2 发只加 1 粮。
+跟进：C 核对狩猎前的仓位判断，E 比较改动后的粮食和里程」。平台实测时填入实际数据和发生条件。
+\end{keybox}
+
+\noindent 如果快照格式还没定，A、B、D 先让一个最小例子通过本地编译。
+C 可以继续做成员动作，E 可以继续核算采购与规则。集成后再一起对案例结果。
 
 \end{document}

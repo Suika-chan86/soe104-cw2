@@ -20,19 +20,29 @@
   若需要新建模块配置，使用现有的 \code{src/} 和 \code{lib/} 目录。
   \item 打开 \textsf{File} $\to$ \textsf{Project Structure}。
   在 \textsf{Project} 下把 \textsf{SDK} 和 \textsf{Language level} 设为 21。
-  如模块单独指定 SDK，选继承项目 SDK 或同一个 JDK 21。
+  下拉框没有 21 时，先通过 \textsf{Add SDK} 选本机已安装的 JDK 21 目录，
+  或在 \textsf{Download JDK} 中选择 21。模块单独指定 SDK 时，选继承项目 SDK 或同一个 JDK 21。
   \item 确认 \code{src/} 已标为 \textsf{Sources Root}。
   如果尚未标记，右键该目录，选择 \textsf{Mark Directory as} $\to$ \textsf{Sources Root}。
+  也可在项目结构的 \textsf{Modules} $\to$ \textsf{Sources} 中核对。
   \item 确认模块依赖包含 \code{lib/oregon-api.jar}。
-  如未配置，可在 \textsf{Project Structure} 的 \textsf{Libraries} 中添加该 JAR，
-  并把它关联到 Java 模块。
+  在 \textsf{Project Structure} $\to$ \textsf{Modules} 中选当前 Java 模块，
+  到 \textsf{Dependencies} 查看。未加入时，点 \textsf{+} 添加 JAR 或目录，
+  选中这个文件，并确认依赖可用于编译。
   \item 在 \textsf{Settings} $\to$ \textsf{Editor} $\to$ \textsf{File Encodings}
   把项目编码设为 UTF-8。已有文件显示异常时，先核对原编码再转换。
 \end{enumerate}
 
 然后从 \textsf{Build} 运行 \textsf{Build Project}，检查构建结果。
-\code{src/} 下的提交类保持默认包，文件名与 public class 名称一致。
-\docref{02_grading}{《02 评分与提交》}列出完整交付格式。
+也可以先在已有源码里选中 \code{PartyFactory}，用 \textsf{Navigate} $\to$ \textsf{Declaration}
+检查能否跳到库里的定义。
+
+\begin{keybox}{新建提交类时要在哪一层}
+在 \code{src/} 上右键，用 \textsf{New} $\to$ \textsf{Java Class} 输入类名，
+例如 \code{TrailHunter}。创建后应看到 \code{src/TrailHunter.java}，
+文件与 public class 同名，类使用默认包。完整交付格式见
+\docref{02_grading}{《02 评分与提交》}。
+\end{keybox}
 
 \clearpage
 \section{用命令行复核}
@@ -52,6 +62,10 @@ javac --release 21 -encoding UTF-8 -cp lib/oregon-api.jar -d out $sources
 \code{javac} 正常退出且无编译错误时，下一步按
 \docref{06_git_handbook}{《06 Git 协作手册》}提交，或将 Java 源文件交平台验证。
 
+\noindent IDE 编译通过、终端却报 JDK 版本错误时，核对终端选中的可执行文件。
+PowerShell 用 \code{Get-Command javac}，Git Bash 用 \code{command -v javac}。
+它们显示的路径应指向 JDK 21。更正 PATH 后重新打开终端，再运行 \code{javac -version}。
+
 \section{按错误定位}
 
 \begin{center}\small
@@ -63,7 +77,8 @@ javac --release 21 -encoding UTF-8 -cp lib/oregon-api.jar -d out $sources
 确认当前目录是仓库根目录，核对是否克隆完整。 \\
 API 导入或类型找不到 &
 确认 JAR 实际存在，且已加入\textbf{当前模块}依赖。
-IDE 能跳转到 API 类表示索引可用，最终以编译为准。 \\
+项目的库列表里看到 JAR，仍需在 \textsf{Modules} 的 \textsf{Dependencies} 页核对。
+如果只有某个自写类报错，再查类名、导入和源码目录。 \\
 \code{invalid source release: 21} &
 \code{javac -version} 是否为 21，IDE 的项目和模块 SDK 是否匹配。 \\
 构建时报告编码错误 &

@@ -2,6 +2,8 @@
 \newcommand{\DocTitle}{项目实施方案}
 \newcommand{\DocSubtitle}{基线、模块契约和验收}
 \input{cw2-docs.tex}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 
 \begin{document}
 \maketitle
@@ -25,6 +27,59 @@ Scout 负责探路。
 
 \section{模块与数据流}
 
+\noindent\textbf{开局装配。}\code{TeamFactory} 创建成员、策略和事件处理器。
+工厂持有一份 \code{Plans}，把同一个对象交给策略和事件处理器。
+
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  turnnode/.style={rectangle,rounded corners=2pt,draw=linkink!60,
+    fill=linkink!5,minimum width=4.4cm,minimum height=1.0cm,align=center,inner sep=4pt},
+  flow/.style={-{Latex[length=2.3mm]},draw=linkink,semithick},
+  flowlabel/.style={font=\small,text=ink,above=2.5pt}
+]
+  \node[turnnode] (strategy) at (2.2,0)
+    {\code{TeamStrategy}\\{\small\color{muted}回合开始：选配速和口粮}};
+  \node[turnnode,draw=accent!65,fill=orange!7,minimum width=2.7cm] (plans) at (8.25,0)
+    {\code{Plans}\\{\small\color{muted}保存本轮状态}};
+  \node[turnnode] (resolver) at (14.3,0)
+    {\code{TeamResolver}\\{\small\color{muted}遇到事件时：选应对方式}};
+  \draw[flow] (strategy.east) -- node[flowlabel] {写入状态} (plans.west);
+  \draw[flow,dashed] (plans.east) -- node[flowlabel] {提供快照} (resolver.west);
+\end{tikzpicture}
+\par\smallskip
+{\small\color{muted}虚线表示计划接入的快照读取。当前解析器固定返回 \code{SAFE}。}
+\end{center}
+
+\noindent\textbf{成员继承。}下面四个成员类分别沿用各自职业的能力，自己实现每回合的动作。
+
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  base/.style={rectangle,rounded corners=2pt,draw=black!42,fill=black!3,
+    minimum width=2.45cm,minimum height=0.57cm,font=\small},
+  projectrole/.style={base,draw=linkink!58,fill=linkink!5,minimum width=2.85cm},
+  inherits/.style={-{Triangle[open,length=2.1mm,width=2.0mm]},draw=black!63}
+]
+  \node[base] (member) at (8.25,0) {\code{Member}};
+  \foreach \x/\job/\file in {
+    1.55/Hunter/TrailHunter,6.02/Doctor/TrailDoctor,
+    10.48/Mechanic/TrailMechanic,14.95/Scout/TrailScout}{
+    \node[base] (\job) at (\x,-1.06) {\code{\job}};
+    \node[projectrole] (\file) at (\x,-1.93) {\code{\file}};
+    \draw[inherits] (\file.north) -- (\job.south);
+    \draw[black!63] (\job.north) -- (\x,-0.55);
+  }
+  \draw[black!63] (1.55,-0.55) -- (14.95,-0.55);
+  \draw[inherits] (8.25,-0.55) -- (member.south);
+\end{tikzpicture}
+\par\smallskip
+{\small\color{muted}空心三角指向父类。成员用引擎传来的 \code{Situation} 决定动作。}
+\end{center}
+
+\clearpage
+\subsection*{模块接口速查}
+
 \begin{center}\small
 \begin{tabularx}{\linewidth}{@{}L{3.8cm}Y@{}}
 \toprule
@@ -47,7 +102,6 @@ Scout 负责探路。
 \code{Plans} 的目标契约与伪代码以\docref{04_decision_model}{《04 决策模型》}为准。
 成员保持独立，策略与解析器通过快照协调。成员接口未提供全队逐人健康及原生饥饿标志。
 
-\clearpage
 \section{把基线改成可测试的策略}
 
 \begin{enumerate}
