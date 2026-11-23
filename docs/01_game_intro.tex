@@ -1,600 +1,114 @@
 \documentclass[UTF8,11pt,a4paper]{ctexart}
-
-\usepackage[margin=2.1cm,headheight=15pt]{geometry}
-\usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{enumitem}
-\usepackage{xcolor}
-\usepackage{tcolorbox}
-\usepackage{fancyhdr}
-\usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
-
-\definecolor{ink}{HTML}{1F2937}
-\definecolor{accent}{HTML}{B45309}
-\definecolor{muted}{HTML}{6B7280}
-
-\ctexset{
-  section    = {format = {\Large\bfseries\color{accent}}},
-  subsection = {format = {\large\bfseries\color{ink}}},
-}
-
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
-\fancyhead[R]{\small\color{muted}项目介绍 · v1.1 · 组内阅读版}
-\fancyfoot[C]{\small\color{muted}\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-
-\setlist{itemsep=2pt,topsep=3pt,parsep=0pt}
-\setlength{\parskip}{0.35em}
-\renewcommand{\arraystretch}{1.25}
-
-\newtcolorbox{keybox}[1][]{
-  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
-  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
-}
-\newtcolorbox{warnbox}[1][]{
-  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
-  left=7pt, right=7pt, top=5pt, bottom=5pt, fonttitle=\bfseries, #1
-}
-
-\title{\vspace{-1.2cm}\textbf{SOE104 CW2：Oregon Trail 决策 AI}\\[4pt]
-\large 项目介绍 —— 这个游戏到底是什么\\[2pt]
-\normalsize 依据 Engine v1.1 / Marking v1.1}
-\author{Group A--E\\\small 整理：A}
-\date{2026-11-22 \quad v2.1}
+\newcommand{\DocTitle}{游戏与规则}
+\newcommand{\DocSubtitle}{从开局采购到每回合结算}
+\input{cw2-docs.tex}
 
 \begin{document}
 \maketitle
 \thispagestyle{fancy}
 
-\begin{warnbox}[title={版本说明（务必先读）}]
-课程在 11 月 13 日发布了 \textbf{Trail Update 1.1}，引擎和评分标准都改了，所有提交\textbf{自动按新规则重新评分}。
-
-\textbf{目前只有更新日志是最新的。}其他官方文件——Tasksheet、API Reference、Engine Rules Spec，
-包括从课程网页重新下载的版本——\textbf{内容仍然是 v1.0}。
-所以规则来源有明确的优先级：
-\end{warnbox}
-
-\begin{center}
-\begin{tabular}{@{}clp{8.4cm}@{}}
-\toprule
-\textbf{优先级} & \textbf{文件} & \textbf{用法} \\
-\midrule
-1 & \textbf{Trail Update 1.1} & 最新。与任何其他文件冲突时，\textbf{一律以它为准} \\
-2 & Engine Rules Spec / API Reference & 仍是 v1.0。只用于更新日志\textbf{没有提到}的部分 \\
-3 & Tasksheet & 仍是 v1.0。提交格式、评分权重、AI 政策仍按它 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent 本文所有数字都标注了来源：\textbf{【U】}表示来自 Trail Update 1.1，\textbf{【S】}表示来自 v1.0 的 Engine Rules Spec。
-
-\begin{keybox}[title={读前须知}]
-本文是\textbf{给组内成员的游戏说明书}，不是官方文件。所有数字来自
-\texttt{Trail Update 1.1}（唯一最新）以及仍是 v1.0 的 \texttt{Engine Rules Spec} / \texttt{API Reference} / \texttt{Tasksheet}。
-本文只解释“游戏怎么玩”，不涉及分工与代码，那些在第 3 份文档。预计阅读 15 分钟。
+\begin{keybox}{你控制哪四件事}
+团队提交一组 Java 类。课程引擎负责随机事件、资源结算、回放和评分。
+我们决定开局买什么、每回合怎么走和吃、怎么应对事件，以及成员各自做什么。
 \end{keybox}
 
-%=====================================================================
-\section{一句话说清这个项目}
+\section{旅程与回合}
 
-\begin{keybox}
-你写的不是一个游戏，而是\textbf{一个代替玩家做决策的 Java 程序}。引擎负责掷骰、结算、记分；
-你负责在四个固定时刻回答四个问题：
+目标是让 3--5 名游戏成员在 120 回合内到达 2000 英里。旅程在到达、用完回合或全队死亡时结束。
+牛降到 0 会失去配速行进，回合与喂食仍继续。
+平台使用同样的三个种子评估各队，比较两个版本时应按种子配对。
 
-\begin{enumerate}[leftmargin=1.6em]
-  \item 开局：买什么？（\texttt{buySupplies()}）
-  \item 每回合开始：走多快、吃多少？（\texttt{PartyStrategy.decide()}）
-  \item 遇到事件：怎么应对？（\texttt{Resolver.resolve()}）
-  \item 事件之后：每个还活着的人这一回合干什么？（\texttt{Member.act()}）
-\end{enumerate}
-\end{keybox}
-
-没有键盘，没有鼠标，没有实时操作。你的所有“操作”都是一次方法调用返回的对象。
-评分器只看你的代码在三个固定随机种子下把大篷车队带到了哪里、带得多完整。
-
-%=====================================================================
-\section{v1.1 改了什么（一页看完）}
-
-这是本次更新最重要的部分。\textbf{旧攻略、旧回放、网上的旧帖子全部作废。}
-
-\begin{center}
-\small
-\begin{longtable}{@{}p{3.4cm}p{4.4cm}p{5.4cm}@{}}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{2.5cm}L{4.7cm}Y@{}}
 \toprule
-\textbf{项目} & \textbf{v1.0} & \textbf{v1.1（现在）} \\
+时点 & 你的入口 & 当时能读到什么 \\
 \midrule
-\endhead
-事件概率 & 15\% $\to$ 43\% & \textbf{20\% $\to$ 56\%}【U】 \\
-SAFE 代价 & 固定值 & \textbf{随严重度缩放}【U】 \\
-HUNT 弹药 & 1 发/次 & \textbf{2 发/次}【U】 \\
-HEAL & $+10$ HP，免费 & \textbf{$+3$ HP，花 3 食物}【U】 \\
-Doctor 的 HEAL & $+15$ 给最伤员 & \textbf{$+5$ 给最伤员，花 3 食物}【U】 \\
-Doctor 特权 & 强化治疗 & \textbf{光环：事件伤害减半}【U】 \\
-REST & $+3$ HP & \textbf{$+2$ HP}【U】 \\
-口粮 & 1 / 2 / 5 & \textbf{1 / 3 / 6}【U】 \\
-FULL 口粮效果 & 每人 $+2$ HP & \textbf{每人 $+1$ HP}【U】 \\
-Game 公式 & 60 距离 + 25 存活 + 15 物资 & \textbf{40 到达 + 30 状态 + 30 货物}【U】 \\
+开局采购 & \code{buySupplies()} & 返回购买清单，引擎按顺序结算。 \\
+回合开始 & \code{decide(PartyState)} & 开头的里程、成员、库存，返回配速和口粮。 \\
+行进、喂食后 & \code{resolve(Event)} & 当前事件和严重度，市场事件有报价。 \\
+事件结算后 & \code{act(Situation)} & 成员行动时的资源和事件信息，存活成员按队列顺序行动。 \\
 \bottomrule
-\end{longtable}
+\end{tabularx}
 \end{center}
+随后是回合结算和生存检查。事件扣粮发生在本轮喂食之后，会挤压下一餐与当前行动的粮食预算。
+\source{ER} \source{API}
 
-\textbf{没有变的：}六种动作、五个角色、\$2000 商店、价格、沙箱规则、\textbf{20/50/15/15 的四个维度权重}【U】。
-
-\begin{warnbox}[title={一句话概括这次更新的方向}]
-\textbf{所有东西都变贵了，而且死亡开始真正扣分。}
-食物更贵（口粮 2$\to$3、狩猎 1$\to$2 弹药）、回血更贵（HEAL 要吃饭）、事件更频繁（15\%$\to$20\% 起步）。
-而评分从“到了就行、钱也算物资”改成“到了、人齐、身体好、货多”四项一起看。
-\end{warnbox}
-
-%=====================================================================
-\section{游戏形式}
-
-\subsection{基本框架}
-
-\begin{center}
-\begin{tabular}{@{}ll@{}}
+\subsection{配速与运力}
+配速里程为基础里程乘 $\min(1,O/4)$，$O$ 为牛数。
+\code{GRUELING} 每人损失 4 HP，并有 15\% 概率损失一头牛。
+有活 Driver 时分别降为 2 HP 和 7\%。 \source{ER}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{3.0cm}YYY@{}}
 \toprule
-\textbf{项目} & \textbf{数值} \\
+牛数 & SLOW & NORMAL & GRUELING \\
 \midrule
-故事背景 & 1848 年，美国西进运动，俄勒冈小道 \\
-总里程 & 2000 英里 \\
-回合上限 & 120 回合 \\
-随机种子 & 3 个固定种子，所有队伍完全相同 \\
-运行方式 & 平台自动编译、自动运行、自动评分，每回合有动画回放 \\
-胜负判定 & 到达 2000 英里 = 完成旅程；全员死亡 = 提前结束 \\
+4 或更多 & 12 & 20 & 28 \\
+3 & 9 & 15 & 21 \\
+2 & 6 & 10 & 14 \\
+1 & 3 & 5 & 7 \\
+0 & 0 & 0 & 0 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
+四头牛用 \code{NORMAL}、只算配速需 100 回合。
+三头牛用 \code{NORMAL}、只算配速需 134 回合，但 Scout 每回合可另贡献 6 英里，
+还有提速和途中补牛方案。是否可达要看剩余里程、动作分工和绕道损失。
+\source{DER}
 
-\subsection{跑得完吗？先算一笔账}
+\clearpage
+\section{供餐、动作与职业}
 
-每回合走的英里数 $=$ pace $\times \min(1,\ \text{oxen}/4)$【S】。
+成员先吃，牛随后每头吃 2 食物。口粮为 \code{BARE} 1、\code{MEAGER} 3、\code{FULL} 6 食物/人。
+充分供餐时三档分别是每人 $-1$、$0$、最多 $+1$ HP。
+四人四牛用 \code{MEAGER} 时，喂饱成员需 12 食物，喂饱全车需 20。
+成员吃不饱才计饥饿，连续饥饿每人依次扣 5、8、12、17、23 HP，此后保持 23。
+一次吃饱重置计数。健康上限 100，到 0 即死亡。 \source{TU} \source{ER} \source{DER}
 
-\begin{center}
-\begin{tabular}{@{}lcccc@{}}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{2.5cm}Y Y@{}}
 \toprule
-\textbf{牛的数量} & \textbf{SLOW (12)} & \textbf{NORMAL (20)} & \textbf{GRUELING (28)} & \textbf{速度系数} \\
+动作 & 基础效果 & 职业或使用限制 \\
 \midrule
-4 头及以上 & 12 & 20 & 28 & 1.00 \\
-3 头 & 9 & 15 & 21 & 0.75 \\
-2 头 & 6 & 10 & 14 & 0.50 \\
-1 头 & 3 & 5 & 7 & 0.25 \\
-0 头 & 0 & 0 & 0 & 0（抛锚）\\
+\code{HUNT} & 2 弹药换最多 7 食物 & Hunter 最多 10。全车食物上限 500。 \\
+\code{HEAL} & 3 食物，自身最多恢复 3 HP & Doctor 治疗最伤的活成员，最多 5 HP。挨饿当轮无效。 \\
+\code{REST} & 自身最多恢复 2 HP & 挨饿当轮无效。 \\
+\code{SCOUT} & 本轮增加 3 英里 & Scout 增加 6 英里。 \\
+\code{MOVE} & 本轮增加 5 英里，自身损失 1 HP & Driver 也掉 1 HP。 \\
+\code{DEFEND} & 受威胁时每名活成员最多恢复 3 HP & 整队每轮至多触发一次。 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
+活着的 Doctor 将全队受到的\textbf{事件伤害}减半。活着的 Mechanic 可免费处理
+\code{BREAKDOWN} 的 \code{SAFE} 修理。Driver 的光环作用于艰难配速。
+这三类光环各自不叠加。 \source{TU} \source{ER}
 
-\begin{center}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{配速} & \textbf{每回合英里} & \textbf{跑完 2000 英里需要} & \textbf{120 回合内能否完成} \\
-\midrule
-SLOW & 12 & 167 回合 & 不能 \\
-NORMAL & 20 & 100 回合 & 能，余 20 回合 \\
-GRUELING & 28 & 72 回合 & 能，余 48 回合 \\
-NORMAL（只有 3 头牛） & 15 & 134 回合 & 不能 \\
-\bottomrule
-\end{tabular}
-\end{center}
+\section{事件与交易}
 
-\begin{keybox}[title={第一个必须记住的结论}]
-\textbf{SLOW 永远到不了终点。}速度的底线是 NORMAL（4 头牛以上）。
-\textbf{3 头牛也不行}——这是 v1.1 里容易被忽略的一条：掉一头牛就直接出局。
-\end{keybox}
+1.1 公告给出的事件率从旅途前期约 20\% 上升到后期约 56\%，
+严重度为 1--10。完整的新概率与严重度分布尚待确认。
+\source{TU} \source{API}
 
-\subsection{引擎什么时候调用你的代码}
-
-每回合固定 7 个阶段，顺序写死【S】：
-
-\begin{center}
-\begin{tabular}{@{}clll@{}}
-\toprule
-\textbf{阶段} & \textbf{发生什么} & \textbf{调用你的什么} & \textbf{你能读到} \\
-\midrule
-1 & 策略 & \texttt{decide(PartyState)} & 全队资源、血量、进度 \\
-2 & 行进 & —— & —— \\
-3 & 进食 & —— & —— \\
-4 & 随机事件 & \texttt{resolve(Event)} & 事件类型、严重度、市场价 \\
-5 & 成员行动 & \texttt{act(Situation)}（每个活人一次） & 本回合事件、食物、弹药、牛数 \\
-6 & 结算 & —— & —— \\
-7 & 存活检查 & —— & —— \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{keybox}[title={为什么这个顺序很重要}]
-\textbf{事件发生在 \texttt{decide()} 之后、\texttt{act()} 之前。}
-策略在“什么都不知道”的时候定调；每个成员在行动时\textbf{已经看到了本回合发生了什么}。
-这正是 \texttt{DEFEND} 存在的理由。
-\end{keybox}
-
-\subsection{三个种子意味着什么}
-
-所有队伍用同样的 3 个随机种子，同一份提交每次结果完全一样。所以：\textbf{运气不是变量，策略才是。}
-“再试一次说不定就好了”是错的——改代码才会变。
-
-%=====================================================================
-\section{游戏目标}
-
-\subsection{硬目标}
-
-\begin{itemize}[leftmargin=1.5em]
-  \item 在 120 回合内把队伍带到 \textbf{2000 英里}。
-  \item 提前结束只有一种情况：\textbf{全员死亡}。
-  \item 牛死光了\textbf{不会}结束游戏，只是车走不动了——但回合和饥饿继续走，等于慢性死亡。
-  \item 成员血量归零即死亡；血量上限 100。
+\begin{itemize}
+  \item 八种通常事件为河流 \code{RIVER}、风暴 \code{STORM}、故障 \code{BREAKDOWN}、
+  疾病 \code{ILLNESS}、袭击 \code{ATTACK}、狩猎机会 \code{HUNT\_OPP}、
+  坏路 \code{BAD\_TRAIL}、失窃 \code{THEFT}。通常选择 \code{SAFE}、\code{RISKY} 或 \code{AVOID}。
+  \item 河流和袭击的付费 \code{SAFE} 选项付不起时自动降为 \code{AVOID}。
+  风暴的 \code{SAFE} 和 \code{RISKY} 直接伤害相同，后者多失牛风险。
+  若伤害代价或死亡风险偏高，可以比较绕道。
+  \item 第九种事件 \code{TRADER} 使用买、卖、议价买、议价卖或离开。
+  每次一笔交易。买入受钱包、50 单位及食品仓位约束；
+  议价失败时不成交。
 \end{itemize}
 
-\subsection{新的评分公式【U】}
-
-\[
-\text{Game} = 40\times\text{arrival} + 30\times\text{condition} + 30\times\text{cargo}
-\]
-
-\begin{center}
-\begin{tabular}{@{}p{2.4cm}p{5.2cm}p{7.2cm}@{}}
-\toprule
-\textbf{项} & \textbf{定义} & \textbf{怎么理解} \\
-\midrule
-arrival & $\text{miles} \div 2000$ & 到了就是满分，没到按比例 \\
-condition & \textbf{全体成员}到达时的平均血量，\textbf{死者按 0 计} & 不是“活了几个人”，是“整体多健康” \\
-cargo & $(\text{food}+\text{oxen}+\text{ammo}+\text{parts})\div1000$，\textbf{钱不算} & 只有食物、牛、弹药、零件算货物 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{warnbox}[title={三条直接结论}]
-\textbf{1. 死一个人现在真的扣分。}4 人队死 1 个，condition 上限从 100 掉到 75，
-即 $30\times0.25 = 7.5$ 分 Game，折合 3.75 分总分——还没算少一个动作的连锁损失。
-
-\textbf{2. 钱在终点一文不值。}cargo 不含 MONEY。钱只有一种用法：在旅途中换成食物、弹药、零件、牛。
-
-\textbf{3. 满分不再靠“活着到”。}官方原话：强队现在落在 85 分上下；
-要上 95 需要\textbf{同时}做到全员存活、接近满血、车上还有价值 1000 单位的货。
-\end{warnbox}
-
-\subsection{三个层次，别混为一谈}
-
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{层次} & \textbf{含义} & \textbf{验证方式} \\
-\midrule
-能编译 & 本地 \texttt{javac} 通过（现在有 jar 了） & IDE 无红线 + \texttt{javac -cp} \\
-能跑完 & 不抛异常、不超时，三个种子都跑到 2000 英里或 120 回合 & 回放能完整播完 \\
-能得分 & 距离、状态、货物三项都高 & 平台分数 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-%=====================================================================
-\section{与《60 Seconds!》的对照}
-
-\subsection{同构表}
-
-\begin{center}
-\begin{tabular}{@{}p{5.2cm}p{6.8cm}@{}}
-\toprule
-\textbf{《60 Seconds!》} & \textbf{本项目（Oregon Trail）} \\
-\midrule
-开场 60 秒冲进屋里抢物资 & \texttt{buySupplies()}：\$2000 买食物/弹药/零件/牛 \\
-每天在避难所里做的决定 & \texttt{PartyStrategy.decide()}：每回合定 pace 和 ration \\
-一家四口，各有脾气和状态 & 3--5 个 \texttt{Member}，五个角色子类各有 perk \\
-派谁出门探险、谁留守 & \texttt{Member.act()}：HUNT / SCOUT / MOVE / DEFEND / HEAL / REST \\
-收音机播报 + 敲门事件 & \texttt{Resolver.resolve(Event)}：九种随机事件 \\
-理智值 / 饥饿值管理 & HP + 食物存量（还能撑几回合） \\
-撑到获救 & 撑到 2000 英里 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\subsection{六条关键差异——不要照搬游戏直觉}
-
-\begin{enumerate}[leftmargin=1.8em]
-  \item \textbf{玩家不是人，是代码。}没有实时操作，只能把“情况不对”提前写进 \texttt{if}。
-  \item \textbf{事件在 \texttt{decide()} 之后才发生，但 \texttt{act()} 在事件之后。}
-        成员能看见本回合的事件再行动，策略不能。这个信息差是设计空间。
-  \item \textbf{DEFEND 每回合只结算一次。}一个防守者就够，多人防守纯浪费。
-  \item \textbf{调用顺序是死的。}没有插队，没有撤销。
-  \item \textbf{没有重开、没有读档。}三个种子跑完就结束。宁可保守跑完，也不要赌一把全灭。
-  \item \textbf{你看到的不是屏幕，是 getter。}所有信息必须通过 \texttt{Situation} / \texttt{PartyState} / \texttt{Event} 读取。
-\end{enumerate}
-
-%=====================================================================
-\section{资源}
-
-\subsection{五种资源}
-
-\begin{center}
-\begin{longtable}{@{}p{2.4cm}p{3.4cm}p{5.6cm}p{3.4cm}@{}}
-\toprule
-\textbf{资源} & \textbf{开局} & \textbf{每回合怎么消耗} & \textbf{归零后果} \\
-\midrule
-\endhead
-食物 Food & 自己买（经典 500） & 口粮 $\times$ 活人，加 $2 \times$ 牛数 & 开始饥饿，逐回合加重 \\
-牛 Oxen & 自己买（经典 5） & 每头每回合吃 2 食物 & 全部死亡 = 车走不动 \\
-弹药 Ammo & 自己买（经典 80） & \textbf{狩猎 2 发/次} & 不能狩猎 \\
-零件 Parts & 自己买（经典 2） & 修理故障消耗 & 只能绕路 \\
-钱 Money & 剩下的都是 & 摆渡、逃跑、交易站 & 付不起 = SAFE 自动降级 AVOID \\
-\midrule
-血量 Health & 建号时设定 & 事件、GRUELING、饥饿 & 0 = 死亡（且拉低 condition）\\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\subsection{食物公式——全场最重要的一个式子}
-
-\begin{keybox}[title={每回合食物消耗}]
-\[
-\text{每回合食物} \;=\; \text{口粮} \times \text{活人数} \;+\; 2 \times \text{牛数}
-\]
-口粮【U】：BARE $=1$，MEAGER $=\mathbf{3}$，FULL $=\mathbf{6}$。
-\end{keybox}
-
-举例：4 个活人、4 头牛、MEAGER 口粮 $= 3\times4 + 2\times4 = \mathbf{20}$ 食物/回合。
-500 食物只够 \textbf{25 回合}，而跑完全程要 100 回合。
-
-\begin{warnbox}[title={v1.0 到 v1.1 最痛的一刀}]
-旧版 MEAGER 是 2 食物/人，4 人 4 牛每回合 16；现在是 \textbf{20}，涨了 25\%。
-同时\textbf{狩猎产出没变、弹药消耗翻倍}——一发的效率从 7 食物掉到 3.5。
-\textbf{食物从“紧”变成了“极紧”。}
-\end{warnbox}
-
-车厢\textbf{最多装 500 食物}，超出部分腐烂（弹药照扣）。不能囤，只能刚好够。
-
-\subsection{饥饿}
-
-喂不饱所有人（整数语义，差一点也算饿），全队每人都掉血【S】：
-
-\begin{center}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-\textbf{连续挨饿第几回合} & 1 & 2 & 3 & 4 & 5 及以后 \\
-\midrule
-\textbf{每人掉血} & 5 & 8 & 12 & 17 & 23（封顶）\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{warnbox}[title={两条容易被忽略的规则}]
-\textbf{1. 挨饿的回合，HEAL 和 REST 完全无效。}只能靠 HUNT 自救。
-
-\textbf{2. 吃满一顿就把计数清零。}偶尔饿一回合可以，连续饿会雪崩。
-\end{warnbox}
-
-%=====================================================================
-\section{六种动作（v1.1 数值）}
-
-每个活着的成员，每回合\textbf{正好做一个动作}。动作是二元的——只能选做什么，不能选多用力。
-
-\begin{center}
-\small
-\begin{longtable}{@{}p{2.2cm}p{6.8cm}p{5.0cm}@{}}
-\toprule
-\textbf{动作} & \textbf{精确效果（v1.1）} & \textbf{备注} \\
-\midrule
-\endhead
-HUNT & \textbf{消耗 2 弹药}，产出 7 食物（Hunter 10）【U】 & 主要食物来源；满仓时白扣弹药 \\
-HEAL & \textbf{$+3$ HP，消耗 3 食物}【U】 & 挨饿回合无效 \\
-\midrule
-\quad Doctor 的 HEAL & \textbf{给最伤员 $+5$ HP，消耗 3 食物}【U】 & 数量减半，但仍然是最高效的回血 \\
-REST & 自己 $+2$ HP【U】 & 挨饿回合无效 \\
-SCOUT & 本回合 $+3$ 英里（Scout 为 $+6$）【S】 & 不消耗血量 \\
-MOVE & 本回合 $+5$ 英里，自己 $-1$ HP【S】 & 所有角色一样，Driver 也不例外 \\
-DEFEND & 若有事件发生，\textbf{所有活人} $+3$ HP【S】 & 每回合只触发一次，多人防守不叠加 \\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\begin{keybox}[title={三个使用要点}]
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{SCOUT 和 MOVE 的里程会累加。}四个人都 MOVE 就是 $+20$ 英里/回合。
-  \item \textbf{DEFEND 只需要一个人。}它给全队 $+3$，收益固定。
-  \item \textbf{狩猎要看着车厢上限。}食物 $\ge 500$ 时 HUNT 仍然扣 2 发弹药、不产食物，是纯亏。
-\end{itemize}
-\end{keybox}
-
-\subsection{五个角色的新 perk}
-
-\begin{center}
-\small
-\begin{tabular}{@{}p{2.4cm}p{3.0cm}p{9.0cm}@{}}
-\toprule
-\textbf{角色} & \textbf{类型} & \textbf{perk（v1.1）} \\
-\midrule
-Hunter & 自身动作 & 自己的 HUNT 产出 10 食物（基础 7）【S】 \\
-Doctor & \textbf{光环} & \textbf{只要有一个 Doctor 活着，全队受到的事件伤害减半}【U】 \\
-Mechanic & 光环 & BREAKDOWN 的 SAFE 修理不消耗零件【S】 \\
-Scout & 自身动作 & 自己的 SCOUT $+6$ 英里（基础 $+3$）【S】 \\
-Driver & 光环 & GRUELING 只扣 2 HP/人、死牛概率 7\%（原 4 HP / 15\%）【S】 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{warnbox}[title={Doctor 从“治疗者”变成了“减伤光环”}]
-这是 v1.1 最大的机制变化。以前 Doctor 的价值是“治疗更强”，现在是
-\textbf{全队事件伤害减半}——它不再依赖动作，只要活着就生效。
-
-而与此同时，普通 HEAL 从“免费 $+10$”砍到“3 食物换 $+3$”。
-\textbf{结论：Doctor 从可选变成了必带。}
-\end{warnbox}
-
-%=====================================================================
-\section{三种姿态与九种事件}
-
-\subsection{姿态}
-
-每回合有 $20\% + 36\%\times\text{进度}$ 的概率发生一个事件，从 20\% 涨到 56\%【U】。
-面对事件，你的 \texttt{Resolver} 从三种姿态里选一个：
-
-\begin{center}
-\begin{tabular}{@{}lll@{}}
-\toprule
-\textbf{姿态} & \textbf{气质} & \textbf{典型代价} \\
-\midrule
-SAFE & 谨慎、花钱消灾 & \textbf{随严重度增长}（v1.1 新规则） \\
-RISKY & 赌一把 & 有机会大赚，也可能大亏，某些事件会\textbf{死牛} \\
-AVOID & 躲开、绕路 & 通常扣里程 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\textbf{交易站（TRADER）是例外}：它的三种“姿态”是具体的交易动作 \texttt{buy()} / \texttt{haggleBuy()} / \texttt{decline()}。
-
-\subsection{九种事件的完整矩阵}
-
-$s$ = 严重度（1--10）。SAFE 列是 v1.1 新值【U】；RISKY 和 AVOID 官方未宣布改动，沿用 v1.0【S】。
-所有 HP 伤害都是\textbf{全队每人}。
-
-\begin{center}
-\small
-\begin{longtable}{@{}p{2.6cm}p{3.9cm}p{4.4cm}p{2.8cm}@{}}
-\toprule
-\textbf{事件} & \textbf{SAFE（v1.1）} & \textbf{RISKY} & \textbf{AVOID} \\
-\midrule
-\endhead
-RIVER & 付 \$20 $+ s$；付不起自动变 AVOID & $s/10$ 概率全队 $-10$ HP、$-20$ 食物；随后 20\% 淹死一头牛 & 在岸边等，$-5$ 英里 \\
-STORM & \textbf{全队 $-s$ HP} & 全队 $-s$ HP；15\% 死一头牛 & 绕路，$-10$ 英里 \\
-BREAKDOWN & 修理：消耗 1 零件（有 Mechanic 免费）；没零件时等同 AVOID & $s/10$ 概率全队 $-5$ HP 且 $-1$ 零件 & 丢弃负重，$-15$ 英里 \\
-ILLNESS & \textbf{随严重度缩放，官方未给公式} & $s/10$ 概率全队 $-(s+5)$ HP，否则完全康复 & 硬扛：全队 $-s$ HP \\
-ATTACK & 付 \$20 $+ s$，且 $-10$ 食物 & 全队 $-s$ HP & 躲藏，$-15$ 英里 \\
-TRADER & 按标价交易（每次一种货） & 砍价：成功率 $0.5+(s-5)\times0.04$ & 走开 \\
-HUNT\_OPP & $-2$ 弹药，$+20$ 食物 & $-4$ 弹药，$+50$ 食物；$s/10$ 概率全队 $-5$ HP & 放弃 \\
-BAD\_TRAIL & $-(6+s)$ 英里 & $s/10$ 概率全队 $-s$ HP 且 15\% 死牛；否则 $+5$ 英里 & 原路返回，$-20$ 英里 \\
-THEFT & $-(5+s)$ 食物 & 50/50，全队 $-5$ HP 或 $-20$ 食物且 $-\$20$ & 让贼拿钱，$-\$15$ \\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\begin{keybox}[title={一眼就能看出的一个变化}]
-\textbf{STORM 的 RISKY 被 SAFE 完全支配了。}
-v1.1 的 SAFE 是“全队 $-s$ HP”，和 RISKY 的伤害\textbf{完全一样}，但 RISKY 还额外有 15\% 死牛。
-所以暴风永远选 SAFE——这是新规则直接造出来的结论。
-\end{keybox}
-
-\subsection{严重度 $s$ 是怎么来的}
-
-v1.0 的公式是 $s=\text{uniform}(1..5)+\text{round}(6\times\text{进度})$，夹在 $[1,10]$【S】。
-Trail Update 只说“severity now climbs even higher”，\textbf{没有给出新公式}【U】。
-
-可确定的只有两件事：$s$ 随进度上升；后期的事件比前期危险得多。
-\textbf{具体窗口待确认}（见第 4 份文档）。
-
-%=====================================================================
-\section{商店与交易站（未变）}
-
-\subsection{开局：General Store}
-
-每队固定 \$2000，价格：食物 \$2 / 弹药 \$3 / 零件 \$30 / 牛 \$80【S】。
-“经典套装”= 500 食物 + 80 弹药 + 5 牛 + 2 零件 = \$1700，剩 \$300。
-
-\begin{warnbox}[title={两个容易踩的坑}]
-\textbf{1. 购买按列表顺序结算，每项按钱包剩余截断。}
-把 FOOD 写在第一项买了 500，后面的牛可能就买不起了。\textbf{顺序会改变结果。}
-
-\textbf{2. 4 头牛才满速}。v1.1 里掉到 3 头就永远跑不完 2000 英里。
-第 5 头牛是保险，但每回合多吃 2 食物——在食物极紧的 v1.1，这个取舍比以前难。
-\end{warnbox}
-
-\subsection{交易站：Trader（未变）}
-
-每次只能做一笔交易，价格随严重度浮动【S】：
-
-\begin{center}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-\textbf{市场行情} & \textbf{严重度} & \textbf{系数} & \textbf{食物单价} & \textbf{牛单价} \\
-\midrule
-便宜（bargain） & 1--3 & $\times 0.7$ & \$1.4 & \$56 \\
-正常（fair） & 4--6 & $\times 1.0$ & \$2.0 & \$80 \\
-昂贵（steep） & 7--10 & $\times 1.4$ & \$2.8 & \$112 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-卖出价 = 买入价的 70\%（最低 \$1）；每次最多买卖 50 单位/种货。
-砍价成功率 $p=\operatorname{clamp}(0.5+(s-5)\times0.04,\ 0.2,\ 0.9)$。
-
-\begin{keybox}[title={钱在 v1.1 的定位变了}]
-cargo 不算钱，所以\textbf{钱只有花掉才有价值}。便宜市场买食物仍是性价比最高的补货方式
-（\$1.4/单位，比商店 \$2 便宜 30\%）。\textbf{攒钱不再有任何收益。}
-\end{keybox}
-
-%=====================================================================
-\section{一个回合的完整走查}
-
-第 17 回合开始：4 个活人（血量 78 / 85 / 70 / 90），4 头牛，食物 380，弹药 62，零件 2，钱 \$120。
-
-\begin{enumerate}[leftmargin=1.8em]
-  \item \textbf{策略}：runway $=380/20=19$ 回合，决定 \texttt{NORMAL} + \texttt{MEAGER}。
-  \item \textbf{行进}：4 头牛满速，$+20$ 英里。
-  \item \textbf{进食}：活人 $4\times3=12$，牛 $4\times2=8$，共 $-20$ 食物，剩 360。
-  \item \textbf{事件}：RIVER，$s=4$。选 AVOID，$-5$ 英里（比付 \$24 划算，见第 4 份文档）。
-  \item \textbf{行动}：
-        \begin{itemize}[leftmargin=1.2em]
-          \item TrailHunter $\to$ HUNT：弹药 $62\to60$，食物 $360\to370$（Hunter 产出 10）。
-          \item TrailDoctor $\to$ HEAL：最伤员 $70\to75$，食物 $370\to367$。
-          \item TrailMechanic $\to$ DEFEND：全队 $+3$ HP。
-          \item TrailScout $\to$ SCOUT：$+6$ 英里。
-        \end{itemize}
-  \item \textbf{结算}：本回合总里程 $20-5+6=21$ 英里。
-  \item \textbf{存活检查}：无人死亡。
-\end{enumerate}
-
-\begin{keybox}[title={看懂这个走查，你就看懂了整个项目}]
-策略层只决定“大方向”；解析层只决定“这一次事件怎么办”；成员层决定“每个人具体做什么”。
-\textbf{三层各管一段，通过共享状态协调。}
-\end{keybox}
-
-%=====================================================================
-\section{十个最容易误解的点（v1.1 版）}
-
-\begin{enumerate}[leftmargin=1.8em]
-  \item \textbf{“慢一点更安全。”} 错。SLOW 跑不完，3 头牛也跑不完。
-  \item \textbf{“医生是用来治疗的。”} 错。v1.1 的 Doctor 是\textbf{减伤光环}，治疗只是兼职。
-  \item \textbf{“治疗免费。”} 错。HEAL 要 3 食物，只回 3 HP。回血是奢侈品。
-  \item \textbf{“食物越多越好。”} 错。上限 500，超出腐烂，弹药照扣。
-  \item \textbf{“钱可以留到最后算物资。”} 错。cargo 不含钱，攒钱等于扔钱。
-  \item \textbf{“死一个人只是少个动作。”} 错。condition 直接扣 $100/N$，4 人队死 1 个扣 25\%。
-  \item \textbf{“挨饿了就 HEAL。”} 错。挨饿回合 HEAL/REST 无效。
-  \item \textbf{“事件伤害只打一个人。”} 错。所有事件 HP 伤害都是全队每人。
-  \item \textbf{“暴风可以硬闯。”} 错。SAFE 和 RISKY 伤害相同，但 RISKY 多 15\% 死牛。
-  \item \textbf{“旧攻略还能用。”} 错。v1.1 改了 10 项核心数值，所有提交已重新评分。
-\end{enumerate}
-
-%=====================================================================
-\section{术语表}
-
-\begin{center}
-\begin{longtable}{@{}p{3.6cm}p{11.4cm}@{}}
-\toprule
-\textbf{术语} & \textbf{含义} \\
-\midrule
-\endhead
-pace & 配速：SLOW / NORMAL / GRUELING，决定每回合基础里程 \\
-ration & 口粮：BARE 1 / MEAGER 3 / FULL 6【U】 \\
-runway & 食物跑道：现有食物还能撑几回合 \\
-severity（$s$） & 事件严重度 1--10，随进度上升 \\
-perk & 角色特权。Hunter/Scout 改自己的动作；Doctor/Mechanic/Driver 是光环 \\
-aura & 光环：只要该角色活着就自动生效，不需要写代码 \\
-shared context & 共享上下文：一个普通对象，被工厂、策略、解析器、成员共同持有 \\
-arrival / condition / cargo & v1.1 评分的三项【U】 \\
-functional gate & 功能闸门：不编译/崩溃/超时 $\rightarrow$ Game 直接 0，总分封顶 40 \\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\vfill
-\begin{center}
-\small\color{muted}
-下一份文档：\texttt{02\_grading.pdf}（评分体系）\quad
-再下一份：\texttt{03\_plan.pdf}（我们要做什么）
-\end{center}
+开局商店只买不卖，钱包 \$2,000。每单位粮、弹药、零件、牛分别为
+\$2、\$3、\$30、\$80。经典篮子为 500 粮、80 弹、2 零件、5 牛，余 \$300。
+现金还有途中购买和付费用途，终局货物只计粮、牛、弹药、零件。
+\source{ER} \source{TU}
+
+\medskip
+\noindent 事件成本与可达性计算见\docref{04_decision_model}{《04 决策模型》}，
+分数和提交见\docref{02_grading}{《02 评分与提交》}。
+\source{TU} 指 Trail Update 1.1，\source{ER} 指未被公告替换的 Engine Rules Spec，
+\source{API} 指 API Reference，\source{DER} 指由规则推导的例子。
 
 \end{document}

@@ -1,461 +1,82 @@
 \documentclass[UTF8,11pt,a4paper]{ctexart}
-
-\usepackage[margin=1.9cm,headheight=15pt]{geometry}
-\usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{tabularx}
-\usepackage{enumitem}
-\usepackage{xcolor}
-\usepackage{tcolorbox}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning}
-\usepackage{fancyhdr}
-\usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black}
-
-\definecolor{ink}{HTML}{1F2937}
-\definecolor{accent}{HTML}{B45309}
-\definecolor{muted}{HTML}{6B7280}
-
-\ctexset{
-  section    = {format = {\large\bfseries\color{accent}}},
-  subsection = {format = {\normalsize\bfseries\color{ink}}},
-}
-
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
-\fancyhead[R]{\small\color{muted}分工与进度提案}
-\fancyfoot[C]{\small\color{muted}\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-
-\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
-\setlength{\parskip}{0.3em}
-\renewcommand{\arraystretch}{1.22}
-
-\newtcolorbox{stepbox}[1][]{
-  colback=blue!2, colframe=blue!45!black, boxrule=0.6pt, arc=2pt,
-  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
-}
-\newtcolorbox{keybox}[1][]{
-  colback=orange!4, colframe=orange!55!black, boxrule=0.6pt, arc=2pt,
-  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
-}
-\newtcolorbox{warnbox}[1][]{
-  colback=red!3, colframe=red!45!black, boxrule=0.6pt, arc=2pt,
-  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
-}
-\newtcolorbox{goodbox}[1][]{
-  colback=green!3, colframe=green!35!black, boxrule=0.6pt, arc=2pt,
-  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1
-}
-
-\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\DocTitle}{分工与进度提案}
+\newcommand{\DocSubtitle}{负责人、交接与提交时间线}
+\input{cw2-docs.tex}
 
 \begin{document}
+\maketitle
+\thispagestyle{fancy}
 
-\begin{center}
-{\LARGE\bfseries CW2 分工与进度提案}\\[4pt]
-{\large 谁做什么 · 什么时候交 · 怎么算做完}\\[6pt]
-{\small\color{muted}Group A--E \quad 2026-11-22 \quad v1.0}
-\end{center}
-
-\vspace{-0.15cm}
-
-\begin{keybox}[title={这份文档解决三个问题}]
-\begin{enumerate}[leftmargin=1.6em]
-  \item \textbf{谁负责什么}——精确到文件名和验收标准
-  \item \textbf{谁先谁后}——避免 B 要用 A 还没写的东西
-  \item \textbf{怎么调整}——有人接不住时怎么办
-\end{enumerate}
+\begin{keybox}{会议需要确认什么}
+仓库已初始化，代码进入基线集成阶段。确认每个人的权限、交付物和验收方式，
+并定下 \code{Plans} 的第一版接口。下表是待团队确认的分工与内部目标日期。
 \end{keybox}
 
-%=====================================================================
-\section{大前提：仓库必须先建好}
+\section{分工与验收}
 
-\begin{warnbox}[title={整个项目卡在这一步，没有例外}]
-\textbf{A 必须先建好 GitHub 仓库，把初始结构推上去，然后其他人才能 clone。}
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{0.8cm}L{3.5cm}Y Y@{}}
+\toprule
+组员 & 负责范围 & 交付 & 验收 \\
+\midrule
+A & \code{TeamFactory}、\code{Plans} & 入口、采购、快照接口和集成版本。 &
+与 B、D 对齐数据契约，整组可编译，能定位平台提交版本。 \\
+B & \code{TeamStrategy} & 配速、口粮、当轮快照与事件时预测。 &
+检查回合 120、失牛、喂食失败和开头状态与投影的区别。 \\
+C & 四个 \code{Trail} 成员类 & 角色各自返回合适的动作。 &
+核对弹药和仓位、治疗粮食开销、防守分工。未观测到的饥饿状态按模型契约处理。 \\
+D & \code{TeamResolver} & 八种普通事件、市场及缺快照回退。 &
+核对严重度、钱包、库存、伤害分支，以及防止死亡、断粮、超时的判断。 \\
+E & 规则核对与回放分析 & 采购核算、边界用例、配对回放记录。 &
+以种子、版本、回合号和可复现实例报告问题，与作者核对修正。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
 
-在这一步完成之前：
-\begin{itemize}[leftmargin=1.4em]
-  \item B、C、D、E \textbf{一行代码都不用写}（也没有地方写）；
-  \item 所有人可以做的只有：读文档、想清楚自己那块的设计。
+\section{交接顺序}
+
+\begin{enumerate}
+  \item A 确认仓库成员权限，并和 B、D 对齐快照的回合号、精确字段与预测字段。
+  如需先提交接口骨架，提供可编译的初始化和临时语义。
+  \item B 与 D 共享同一组边界用例。B 确认快照与返回的指令匹配，
+  D 确认只读当前回合的数据，并验证回退。
+  \item C 可独立开发成员行为。E 可先做采购与规则核算，
+  集成后用同组三个种子比较，检查与预期不同的关键回合。
+\end{enumerate}
+
+接口以\docref{04_decision_model}{《04 决策模型》}为准，
+当前基线和模块说明见\docref{03_plan}{《03 项目实施方案》}。
+
+\clearpage
+\section{内部排期}
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}L{2.9cm}L{3.45cm}Y@{}}
+\toprule
+目标日期 & 阶段 & 检查点 \\
+\midrule
+11-23 & 确认可开工 & 检查仓库权限，确认分工、互相依赖和快照接口。 \\
+11-27 & 第一次整体集成 & 合并后用 JDK 21 编译，E 核对重点边界。 \\
+11-28 & 首次平台基线 & 提交完整版本，保存三个种子的回放和对应提交标识。 \\
+12-01 & 第一轮修正 & 按回放集中修复最大的生存与推进问题，与基线配对比较。 \\
+12-02 至 12-10 & 迭代与复核 & 逐轮优化供餐与里程、事件和交易，保留稳定版本。 \\
+12-11 至 12-12 & 候选验收与冻结 & 复核运行、提交格式和课程要求，留出重验时间。 \\
+12-13 23:59 & 课程截止，中国时间 & 组内确认平台的最新有效提交符合预期。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{协作与变更}
+
+\begin{itemize}
+  \item 独立小改动按\docref{06_git_handbook}{《06 Git 协作手册》}同步。
+  修改共享接口前先通知相关作者，由 A 协调集成。仓库访问按课程要求配置，仅向组员开放。
+  \item 本地先编译并核对改动。只上传完整且可追溯的版本做平台验证。
+  留存最后一次表现稳定的提交标识和回放，因为平台以最新一次为准。
+  \item 每个作者负责解释本模块的正常和边界用例。AI 辅助的使用与记录按
+  \docref{02_grading}{《02 评分与提交》}执行。
+  \item 模块卡住时先确认缺的接口、样例或回放，再决定结对、拆任务或调整负责人。
+  把变更同步到此表和会议记录。
 \end{itemize}
-
-\textbf{这不是流程问题，是物理问题}——没有仓库就没有统一的工作目录，
-四个人各写各的，最后合并会变成灾难。
-\end{warnbox}
-
-\subsection{A 需要完成的四件事}
-
-\begin{stepbox}[title={建仓库清单（预计 30 分钟）}]
-\begin{enumerate}[leftmargin=1.8em]
-  \item 在 GitHub 建一个 \textbf{Public} 仓库，名字 \code{soe104-cw2}
-  \item 建目录结构（见 \S1.2）
-  \item 放一个 \code{.gitignore}，内容：
-        \begin{verbatim}
-out/
-*.class
-.idea/
-*.iml
-\end{verbatim}
-  \item 把 \code{oregon-api.jar} 放进 \code{lib/}，一起提交
-  \item 把仓库地址发到群里
-\end{enumerate}
-\end{stepbox}
-
-\begin{goodbox}[title={为什么 jar 也提交}]
-只有 18KB，放进仓库后\textbf{所有人不用单独下载}，也不用担心版本不一致。
-提交平台时只交 \code{.java}，jar 不会进提交内容。
-\end{goodbox}
-
-\subsection{目标目录结构}
-
-\begin{center}
-\begin{tabular}{@{}llp{7.6cm}@{}}
-\toprule
-\textbf{路径} & \textbf{提交？} & \textbf{说明} \\
-\midrule
-\code{src/} & 是 & 8 个 \code{.java}，每人一个文件 \\
-\code{lib/oregon-api.jar} & 是 & 课程提供的库，放仓库里方便大家 \\
-\code{docs/} & 是 & 01--07 这几份文档 \\
-\code{out/} & \textbf{否} & 编译产物，已在 \code{.gitignore} 里 \\
-\code{.idea/} & \textbf{否} & IDEA 配置，同样已排除 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-%=====================================================================
-\section{分工总表}
-
-\begin{center}
-\small
-\begin{longtable}{@{}p{0.7cm}p{3.6cm}p{2.8cm}p{6.8cm}@{}}
-\toprule
-\textbf{人} & \textbf{负责文件} & \textbf{一句话职责} & \textbf{主要产出} \\
-\midrule
-\endhead
-A & \code{TeamFactory}\newline \code{Plans} & 数据流与集成 & 共享上下文、装配、采购、合并、提交 \\
-B & \code{TeamStrategy} & 每回合定配速与口粮 & runway 计算、写入状态快照 \\
-C & 四个 \code{Trail*} \newline 成员类 & 每个成员做什么 & 四个 \code{act()} 实现 \\
-D & \code{TeamResolver} & 九种事件怎么应对 & 九条分派分支 + 覆盖规则 \\
-E & 不写主代码 & 核对与复盘 & 采购核算、事件表核对、回放记录 \\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\begin{keybox}[title={分法的依据}]
-\textbf{按“每个模块需要什么”分，不是按“谁水平高”分。}
-
-调整的判据只有一条：\textbf{这个模块的验收标准，你能不能达到。}
-达不到就换，换不掉就拆小——不是平均分工作量。
-\end{keybox}
-
-%=====================================================================
-\section{逐人职责}
-
-\noindent 每人一张卡：\textbf{做什么 / 依赖谁 / 怎么算做完}。
-
-%------------------------------------------------------------------
-\subsection{A —— \code{TeamFactory} + \code{Plans}}
-
-\begin{stepbox}[title={A}]
-\textbf{做什么}
-\begin{enumerate}[leftmargin=1.6em,itemsep=0pt]
-  \item 设计 \code{Plans} 的字段
-        （\code{turn, food, oxen, ammo, minHealth, averageHealth, foodScarce, turnsTight}）
-        和读写方法，字段全 private
-  \item 实现 \code{createMembers()}：返回 4 个成员，每个构造时注入\textbf{同一个} \code{Plans}
-  \item 实现 \code{buySupplies()}：采购清单与顺序（贵的写在前面）
-  \item \code{strategy()} / \code{resolver()} 返回具名类实例，不用 lambda
-  \item 建仓库、合并、平台提交、打 tag
-\end{enumerate}
-\textbf{依赖}：无。\textbf{但要先给出构造器签名}，其他人才好开工。
-
-\textbf{怎么算做完}：本地编译通过；平台能出回放；\code{createMembers()} 返回 4 人。
-\end{stepbox}
-
-%------------------------------------------------------------------
-\subsection{B —— \code{TeamStrategy}}
-
-\begin{stepbox}[title={B}]
-\textbf{做什么}
-\begin{enumerate}[leftmargin=1.6em,itemsep=0pt]
-  \item 从 \code{PartyState} 读出：\code{aliveMembers()}、食物、牛、全队血量
-  \item 算 runway $=$ 食物 $\div(3\times$活人$+2\times$牛$)$
-  \item 按 runway 和平均血决定口粮（BARE / MEAGER / FULL）
-  \item 按“剩余里程 $\div$ 剩余回合”决定配速
-  \item \textbf{把结果写进 \code{Plans}}——这是 D 唯一的信息来源
-\end{enumerate}
-\textbf{依赖}：\code{Plans} 的 setter（A 提供）。
-
-\textbf{怎么算做完}：3 个种子跑完 120 回合不崩；回放里能看到口粮随食物变化而切换。
-\end{stepbox}
-
-%------------------------------------------------------------------
-\subsection{C —— 四个成员类}
-
-\begin{stepbox}[title={C}]
-\textbf{做什么}
-\begin{enumerate}[leftmargin=1.6em,itemsep=0pt]
-  \item 四个类分别 \code{extends} Hunter / Doctor / Mechanic / Scout，构造器链 \code{super(name)}
-  \item 各自实现 \code{act(Situation)}，返回一个 \code{Action}
-  \item 约定：\textbf{Mechanic 当固定防守者}（事件回合返回 DEFEND）
-  \item 挨饿回合不返回 HEAL/REST（无效），改 HUNT
-  \item 满仓（食物 $\ge500$）不 HUNT（浪费弹药）
-\end{enumerate}
-\textbf{依赖}：\code{Situation} 的 getter（库直接提供）。\textbf{不需要等任何人。}
-
-\textbf{怎么算做完}：四个类都能返回合法 \code{Action}；没有一条路径返回 \code{null}。
-\end{stepbox}
-
-\begin{goodbox}[title={C 为什么零依赖}]
-设计上让成员类\textbf{只依赖 \code{Situation}，不依赖 \code{Plans}}。
-\code{Situation} 自带食物、人数、牛数、本回合事件——足够算 runway。
-
-\textbf{好处}：仓库一建好，C 就能开工，不用等 A 的 \code{Plans} 完成。
-\end{goodbox}
-
-%------------------------------------------------------------------
-\subsection{D —— \code{TeamResolver}}
-
-\begin{stepbox}[title={D}]
-\textbf{做什么}
-\begin{enumerate}[leftmargin=1.6em,itemsep=0pt]
-  \item 按 \code{event.kind()} 分派九种事件（RIVER / STORM / BREAKDOWN / ILLNESS /
-        ATTACK / TRADER / HUNT\_OPP / BAD\_TRAIL / THEFT）
-  \item 每种按严重度 $s$ 分档返回 SAFE / RISKY / AVOID
-  \item 读 \code{Plans} 做三条覆盖：血量接近致死、牛只剩 4 头且回合紧张、食物不足
-  \item TRADER 走单独分支（\code{buy}/\code{decline}），不走三姿态
-\end{enumerate}
-\textbf{依赖}：\code{Plans} 的 getter（A 提供）；事件数值表（\texttt{01} 第 9 页）。
-
-\textbf{怎么算做完}：\textbf{每个分支都有返回值}；九条分支能逐条对照 \code{01} 第 9 页的表格讲出来。
-\end{stepbox}
-
-%------------------------------------------------------------------
-\subsection{E —— 核对与复盘（不写主代码）}
-
-\begin{stepbox}[title={E}]
-\textbf{做什么}
-\begin{enumerate}[leftmargin=1.6em,itemsep=0pt]
-  \item \textbf{采购核算}：按 \code{04} §5 的食物预算表，算清楚 500 食物能撑多少回合
-  \item \textbf{事件表核对}：拿 D 的代码逐条比对 \code{01} 第 9 页，找数值抄错、分支遗漏
-  \item \textbf{回放分析}：每次提交后看回放，记录死亡回合、饥饿回合数、里程曲线
-  \item 维护一份“回放观察记录”，每次提交更新
-\end{enumerate}
-\textbf{依赖}：D 的代码合并后才有活；之前先做采购核算和事件表核对。
-
-\textbf{怎么算做完}：每次提交后 24 小时内有一份记录，问题要指到\textbf{具体回合号}，不是“感觉不太行”。
-\end{stepbox}
-
-%=====================================================================
-\section{提交时间线}
-
-\begin{keybox}[title={先讲清楚：依赖的是“接口”，不是“实现”}]
-B 和 D 需要的不是“A 写完 \code{Plans} 的逻辑”，而是\textbf{“\code{Plans} 有哪些字段、怎么读写”}。
-
-所以 A 在 \textbf{D0}（会议当晚）只做两件小事：建仓库，把 \code{Plans} 的字段和
-getter/setter 写出来（方法体可以是空的），构造函数签名定死。
-\textbf{这一晚之后，所有人第二天就能按签名开工，不必等 A 实现。}
-\end{keybox}
-
-\begin{figure}[htbp]
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[x=1.72cm, y=1.0cm, font=\small]
-% columns D0..D8
-\foreach \d in {0,...,9} \draw[black!8] (\d,-4.55) -- (\d,0.75);
-\foreach \d in {0,...,8}
-  \node[font=\scriptsize, black!50] at (\d+0.5,0.52) {D\d};
-% row labels
-\foreach \r/\lb in {0/A,-1/B,-2/C,-3/D,-4/E}
-  \node[anchor=east, font=\footnotesize\bfseries] at (-0.12,\r) {\lb};
-
-% A
-\fill[orange!32, draw=orange!60!black, line width=0.5pt, rounded corners=2.5pt]
-  (0.05,-0.3) rectangle (0.95,0.3);
-\node[font=\scriptsize] at (0.5,0) {仓库 + 签名};
-\fill[orange!16, draw=orange!50!black, line width=0.5pt, rounded corners=2.5pt]
-  (4.05,-0.3) rectangle (4.95,0.3);
-\node[font=\scriptsize] at (4.5,0) {集成};
-\fill[orange!32, draw=orange!60!black, line width=0.5pt, rounded corners=2.5pt]
-  (5.05,-0.3) rectangle (5.95,0.3);
-\node[font=\scriptsize] at (5.5,0) {首提};
-\fill[orange!16, draw=orange!50!black, line width=0.5pt, rounded corners=2.5pt]
-  (6.05,-0.3) rectangle (8.95,0.3);
-\node[font=\scriptsize] at (7.5,0) {按回放修 + 再提};
-
-% B
-\fill[blue!13, draw=blue!45!black, line width=0.5pt, rounded corners=2.5pt]
-  (1.05,-1.3) rectangle (4.95,-0.7);
-\node[font=\scriptsize] at (3.0,-1) {\code{TeamStrategy}};
-
-% C
-\fill[green!22, draw=green!40!black, line width=0.5pt, rounded corners=2.5pt]
-  (1.05,-2.3) rectangle (4.95,-1.7);
-\node[font=\scriptsize] at (3.0,-2) {四个成员类（零依赖）};
-
-% D
-\fill[violet!14, draw=violet!45!black, line width=0.5pt, rounded corners=2.5pt]
-  (1.05,-3.3) rectangle (2.95,-2.7);
-\node[font=\scriptsize] at (2.0,-3) {骨架};
-\fill[violet!14, draw=violet!45!black, line width=0.5pt, rounded corners=2.5pt]
-  (3.05,-3.3) rectangle (4.95,-2.7);
-\node[font=\scriptsize] at (4.0,-3) {九条分支};
-
-% E
-\fill[black!7, draw=black!35, line width=0.5pt, rounded corners=2.5pt]
-  (1.05,-4.3) rectangle (1.95,-3.7);
-\node[font=\scriptsize] at (1.5,-4) {采购核算};
-\fill[black!7, draw=black!35, line width=0.5pt, rounded corners=2.5pt]
-  (2.05,-4.3) rectangle (4.95,-3.7);
-\node[font=\scriptsize] at (3.5,-4) {事件表核对};
-\fill[black!7, draw=black!35, line width=0.5pt, rounded corners=2.5pt]
-  (6.05,-4.3) rectangle (8.95,-3.7);
-\node[font=\scriptsize] at (7.5,-4) {回放分析};
-
-% milestones
-\foreach \x/\lab in {1/M1,5/M2,6/M3,9/M4}{
-  \draw[dashed, thick, red!50!black] (\x,-4.55) -- (\x,0.4);
-  \node[font=\scriptsize\bfseries, red!50!black, anchor=south, fill=white, inner sep=1pt]
-    at (\x,0.42) {\lab};
-}
-\end{tikzpicture}}
-\caption{提交时间线。红色虚线标在\textbf{当天结束}。D0 = 11-23，D1 = 11-24，……，D8 = 12-01。}
-\end{figure}
-
-\begin{center}
-\small
-\begin{tabular}{@{}p{0.9cm}p{1.5cm}p{1.6cm}p{4.4cm}p{5.4cm}@{}}
-\toprule
-\textbf{标记} & \textbf{日} & \textbf{日期} & \textbf{事件} & \textbf{做完之后谁可以开工} \\
-\midrule
-M1 & D0 & 11-23 & A 建仓库 + 发布 \code{Plans} 字段与签名 & \textbf{全员解锁}（B、D 拿签名，C 拿仓库） \\
-M2 & D4 & 11-27 & 所有人合并到 \code{main}，第一次整体编译 & E 可以核对最终代码 \\
-M3 & D5 & 11-28 & 第一次提交平台，拿到回放 & 全组看到真实数据，开始按数据改 \\
-M4 & D8 & 12-01 & 第二次提交（含第一轮修正） & —— \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{warnbox}[title={两个关键时间点}]
-\textbf{1. M1 必须当晚完成。}如果 A 拖到第二天，全组停摆一天。
-\code{Plans} 的骨架大约 30--60 分钟，没有理由拖。
-
-\textbf{2. M2 要留一整天。}在那之前每个人都只在自己的文件里工作，
-合到一起才发现问题。M2 安排在截止前就来不及修了。
-\end{warnbox}
-
-\begin{goodbox}[title={为什么 D5 之后还有 D6--D8 空档}]
-D6 是\textbf{缓冲}。第一次回放几乎一定暴露问题（饥饿、死亡、里程不足），
-留三天专门修，而不是发现问题时已经没有时间。
-\end{goodbox}
-
-%=====================================================================
-\section{交接点：谁给谁什么}
-
-\begin{center}
-\small
-\begin{tabular}{@{}p{1.2cm}p{1.4cm}p{3.6cm}p{2.0cm}p{3.6cm}@{}}
-\toprule
-\textbf{从} & \textbf{给} & \textbf{什么} & \textbf{何时} & \textbf{不给会怎样} \\
-\midrule
-A & 全员 & 仓库地址 + 目录结构 & D0 & 没人能开始 \\
-A & B、D & \code{Plans} 的字段与 getter/setter & D0 & B 和 D 无法开工 \\
-B & D & \code{minHealth}、\code{oxen}、\code{foodScarce} & 每回合 & D 的判断全瞎 \\
-D & E & 九条分支的实现 & 合并时 & E 无从核对 \\
-E & 全员 & 回放里的失败回合与原因 & 每次提交后 & 下一轮改错方向 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-%=====================================================================
-\section{怎么讨论与调整}
-
-\subsection{三个问题，每人 60 秒}
-
-\noindent 点名，不要群问。每人回答这三句，A 记录：
-
-\begin{enumerate}[leftmargin=1.8em]
-  \item \textbf{“我负责 \_\_\_，我理解它是 \_\_\_。”}
-        \begin{itemize}[leftmargin=1.2em]
-          \item 说不出来 = 这块他做不了，当场换人，比答辩时暴露好。
-        \end{itemize}
-  \item \textbf{“我这里最没把握的是 \_\_\_。”}
-        \begin{itemize}[leftmargin=1.2em]
-          \item 有明确答案就结对。
-        \end{itemize}
-  \item \textbf{“我需要 \_\_\_ 才能开始。”}
-        \begin{itemize}[leftmargin=1.2em]
-          \item 通常是“需要 A 先给我签名”或“需要仓库地址”。
-        \end{itemize}
-\end{enumerate}
-
-\subsection{如果某块没人接得住}
-
-\begin{center}
-\small
-\begin{tabular}{@{}p{4.0cm}p{9.6cm}@{}}
-\toprule
-\textbf{情况} & \textbf{处理} \\
-\midrule
-D 觉得 \code{TeamResolver} 太重 & A 和 D 结对：A 讲清前 3 条分支怎么来的，
-\textbf{D 自己写完剩下 6 条}；E 逐条核对 \\
-C 写不动 4 个类 & 先交 Hunter / Doctor 两个，\textbf{另外两个仍由 C 写}，
-但只要求最简实现 \\
-B 不确定阈值 & 只写结构，阈值先填 \code{03} 里的初值，之后用回放调 \\
-有人完全跟不上 & 转做 E 的活（回放分析 + 事件表核对），不写代码但必须有产出 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{keybox}[title={一条硬约束}]
-\textbf{一个人只能负责他自己讲得清的部分。}
-如果某人分到的模块他讲不清，那块代码就不该进提交——不是因为被抓，
-而是因为\textbf{答辩时他会答不上来，全组一起承担后果}。
-\end{keybox}
-
-%=====================================================================
-\section{工作规则}
-
-\begin{center}
-\begin{tabular}{@{}p{0.7cm}p{12.9cm}@{}}
-\toprule
-\textbf{\#} & \textbf{规则} \\
-\midrule
-1 & \textbf{直接推 \code{main}}，不做分支（一人一个文件，冲突风险低） \\
-2 & \textbf{合并即提交}——每合并一个模块，当天提交一次平台，拿回放 \\
-3 & \textbf{推代码前作者脱稿讲 3 分钟，讲不清不推} \\
-4 & \textbf{自己负责的类，从空文件开始手打}；AI 只用来查 API、问报错、要 review \\
-5 & 每次成功提交打个 tag 或复制一份；12-12 之后冻结逻辑 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\begin{warnbox}[title={第 3、4 条要说出口，不要只写在文档里}]
-“课程会查 AI 生成，被标记要参加设计答辩。但\textbf{答辩只是检测手段，不是豁免}——
-规则禁的是‘让 AI 生成’这个行为，不是你后来懂没懂。
-
-所以我们的做法是：\textbf{每个人自己负责的类，从空文件开始手打。}
-AI 可以帮你理解、帮你找错，但\textbf{不能吐出方法体让你抄}。”
-\end{warnbox}
-
-\begin{keybox}[title={为什么这条可执行}]
-\textbf{看 Git 提交历史就知道。}
-一个类如果有多次增量提交、中间还改过错，基本能确认是手写的；
-一次性提交一个完整类，就值得问一句。
-
-这也是 D0 先交空骨架的原因——\textbf{让所有人从空文件开始，而不是从一段完整代码开始。}
-\end{keybox}
-
-\vfill
-\begin{center}
-\small\color{muted}
-配套文档：\code{01} 规则 \quad \code{02} 评分 \quad \code{03} 方案 \quad
-\code{04} 决策模型 \quad \code{06} Git \quad \code{07} IDEA
-\end{center}
 
 \end{document}

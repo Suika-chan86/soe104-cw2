@@ -1,0 +1,53 @@
+% Shared layout for the CW2 companion documents.
+\usepackage[margin=2.1cm,headheight=16pt]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,tabularx,ragged2e}
+\usepackage{enumitem,xcolor,fancyhdr,listings,tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{hyperref}
+\usepackage{bookmark}
+
+\newcommand{\DocVersion}{3.0}
+\newcommand{\EngineVersion}{1.1}
+\newcommand{\DocDate}{2026-11-23}
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{92400E}
+\definecolor{muted}{HTML}{4B5563}
+\definecolor{linkink}{HTML}{174678}
+\definecolor{codebg}{HTML}{F5F7FA}
+\hypersetup{unicode,colorlinks=true,linkcolor=linkink,urlcolor=linkink,
+  filecolor=linkink,pdftitle={SOE104 CW2 \DocTitle\space v\DocVersion},
+  pdfauthor={Group A--E}}
+\ctexset{section={format={\Large\bfseries\color{accent}}},
+  subsection={format={\large\bfseries\color{ink}}}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{muted}SOE104 CW2 · Oregon Trail}
+\fancyhead[R]{\small\color{muted}\DocTitle\ v\DocVersion}
+\fancyfoot[C]{\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.35em}
+\setlength{\emergencystretch}{1.5em}
+\renewcommand{\arraystretch}{1.23}
+\setlist{itemsep=3pt,topsep=3pt,parsep=0pt,leftmargin=1.7em}
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newtcolorbox{keybox}[1]{breakable,title={#1},colback=orange!4,
+  colframe=accent,boxrule=0.55pt,arc=2pt,fonttitle=\bfseries}
+\newtcolorbox{warnbox}[1]{breakable,title={#1},colback=red!3,
+  colframe=red!45!black,boxrule=0.55pt,arc=2pt,fonttitle=\bfseries}
+\lstset{basicstyle=\small\ttfamily,backgroundcolor=\color{codebg},
+  xleftmargin=0.9em,frame=l,rulecolor=\color{linkink!45},
+  breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false,
+  aboveskip=0.65em,belowskip=0.65em}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\source}[1]{\textup{\small\textcolor{muted}{[#1]}}}
+\newcommand{\docref}[2]{\href{./#1.pdf}{#2}}
+\renewcommand{\maketitle}{%
+  \begin{center}
+    {\LARGE\bfseries CW2 \DocTitle\par}
+    \vspace{0.35em}{\large\DocSubtitle\par}
+    \vspace{0.75em}{\small\color{muted}Group A--E · 整理：A
+      \quad\DocDate\quad 文档 v\DocVersion\par}
+    \vspace{0.2em}{\small\color{muted}Engine / Marking v\EngineVersion\par}
+  \end{center}
+  \vspace{0.4em}}

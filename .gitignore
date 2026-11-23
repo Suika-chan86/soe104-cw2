@@ -3,3 +3,11 @@ out/
 .idea/
 *.iml
 archive/
+# Keep the superseded decision model available to teammates.
+!/archive/
+/archive/*
+!/archive/v2_2026-11-22/
+/archive/v2_2026-11-22/*
+!/archive/v2_2026-11-22/ARCHIVED.md
+!/archive/v2_2026-11-22/04_decision_model.tex
+!/archive/v2_2026-11-22/04_decision_model.pdf
