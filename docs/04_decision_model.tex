@@ -102,6 +102,186 @@ cargo 里的 $F,O,A,P$ 分别是食物、牛、弹药、零件，\textbf{不含�
 \end{itemize}
 \end{keybox}
 
+\subsection{展开与化简：把 FINAL 变成一把尺子}
+
+\noindent 上面的公式还不能直接用来做决定——它写的是\textbf{终局状态}（走了多远、剩多少血、剩多少货），
+而我们要决定的是\textbf{每回合做什么}。中间差一步替换。这一节把那一步补上。
+
+\subsubsection*{第一步：拆出静态项}
+
+\[
+\text{FINAL}=0.20\,\text{OOP}+0.50\,\text{Game}+0.15\,\text{Naming}+0.15\,\text{Efficiency}
+\]
+
+前三项里，OOP、Naming、Efficiency 由代码写法决定，和跑得好不好无关。记
+\[
+S=0.20\,\text{OOP}+0.15\,\text{Naming}+0.15\,\text{Efficiency}\in[0,50],
+\]
+它是个\textbf{常数}——写好代码就锁定了。剩下的全部问题都是让 $0.5\,\text{Game}$ 尽量大：
+
+\[
+\text{FINAL}=S+\tfrac12\,\text{Game}.
+\]
+
+\begin{keybox}[title={第一个结论}]
+\textbf{策略能影响的只有一半的分数。}
+把 Game 从 0 拉到满分，最多值 50 分；而静态分写干净就是 50 分，
+且不需要任何回放就能拿到。这就是为什么文档反复说“先拿确定的分”。
+\end{keybox}
+
+\subsubsection*{第二步：把 Game 拆成三个可加项}
+
+\[
+\tfrac12\text{Game}=20\cdot\frac{D}{2000}+15\cdot\frac{\sum_i h_i}{100N}+15\cdot\min\!\Big(1,\frac{U}{1000}\Big)
+\]
+
+把系数并进去：
+
+\[
+\boxed{\ \text{FINAL}=S+\frac{D}{100}+\frac{0.15}{N}\sum_i h_i+15\min\!\Big(1,\frac{U}{1000}\Big)\ }
+\]
+
+其中 $D$ 是终局里程，$h_i$ 是第 $i$ 个初始成员的血量（死者记 0），$U=F+O+A+P$ 是终局货物总量，$N$ 是初始人数。
+
+\subsubsection*{第三步：求边际，得到三种资源的汇率}
+
+对每个变量求偏导，就是“多一单位值多少分”：
+
+\begin{center}
+\begin{tabular}{@{}lccl@{}}
+\toprule
+\textbf{资源} & \textbf{边际分} & \textbf{折成英里} & \textbf{说明} \\
+\midrule
+1 英里 & $1/100=0.01$ & $1$ & 基准单位 \\
+1 点血量（某一人） & $0.15/N$ & $15/N$ & 随人数变化：$N{=}3{:}5.0$，$N{=}4{:}3.75$，$N{=}5{:}3.0$ \\
+1 单位货物 & $0.015$ & $1.5$ & 未达 1000 上限时 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 换句话说，\textbf{整个游戏只有一种货币：英里}。
+
+\begin{keybox}[title={三个可以直接用于决策的换算}]
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{1 点血量 $=$ 3.75 英里}（4 人队）。这就是为什么“掉 4 血换 8 英里”的 GRUELING 是亏的。
+  \item \textbf{1 单位货物 $=$ 1.5 英里}。剩 200 食物在车上，等于白送 300 英里。
+  \item \textbf{死一个成员}（4 人队）$=100$ 点血量 $=375$ 英里。
+        这与 \texttt{02} 里“一条命 $\approx375$ 英里”完全对得上——两条路径算出同一个数。
+\end{enumerate}
+\end{keybox}
+
+\begin{warnbox}[title={人数越少，每个人越值钱}]
+血量项的系数是 $15/N$，所以：
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+& $N=3$ & $N=4$ & $N=5$ \\
+\midrule
+1 点血量 & 5.0 英里 & 3.75 英里 & 3.0 英里 \\
+死一个人 & 500 英里 & 375 英里 & 300 英里 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{这是一个反直觉但重要的结论}：小队虽然干活的人少，但\textbf{每个人的命更贵}。
+3 人队死一个，等于丢掉 500 英里的距离分——相当于整局四分之一的进度。
+\end{warnbox}
+
+\subsubsection*{第四步：把决策变量代进去}
+
+终局状态由每回合的决策累积而成：
+
+\[
+D=\sum_t \Delta D_t,\qquad
+\sum_i h_i=\sum_i 100-\sum_t \Delta H_t,\qquad
+U=U_0-\sum_t C_t+\sum_t P_t
+\]
+
+其中 $\Delta D_t$ 是第 $t$ 回合的里程变化（可为负），$\Delta H_t$ 是全场血量净变化，
+$C_t$ 是该回合消耗的资源，$P_t$ 是产出的资源（狩猎、交易所得）。
+
+代回上面的式子，就得到\textbf{每回合的评分式}：
+
+\[
+\boxed{\ \Delta\text{FINAL}_t=0.01\,\Delta D_t+\frac{0.15}{N}\,\Delta H_t-0.015\,C_t+0.015\,P_t\ }
+\]
+
+\begin{keybox}[title={这一行就是整份文档的总结}]
+\textbf{每一个动作、每一个事件姿态，都可以用这一个式子打分：}
+它带来多少英里（第一项），带来或损失多少血量（第二项），
+消耗多少资源（第三项），产出多少资源（第四项）。
+
+下面几节所有表格里的“英里当量”，都是这个式子的特例。
+\end{keybox}
+
+\subsubsection*{第五步：两种价格——为什么 §4 的 $\lambda$ 不是这张表}
+
+上表的数字是\textbf{终局价值}（东西撑到终点值多少）。但在\textbf{旅途中}做决定时，
+用的应该是\textbf{替换成本}（现在弄丢一单位，要花多大代价补回来）。两者不同：
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{2.0cm}p{3.4cm}p{3.4cm}p{5.0cm}@{}}
+\toprule
+\textbf{资源} & \textbf{终局价值} & \textbf{替换成本（§4）} & \textbf{差在哪} \\
+\midrule
+食物 & 1.5 英里 & 1.0 英里 & 食物几乎一定会被吃掉，所以按“燃料价”算 \\
+血量 & 3.75 英里 & 2.0 英里 & 血可以靠 Doctor 补回来，所以按“补血价”算 \\
+弹药 & 1.5 英里 & 1.5 英里 & 只能花钱买，两者相同 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{keybox}[title={为什么这个区分很重要}]
+\textbf{终局价值 $>$ 替换成本}，说明“补回来”是划算的——差值就是这笔生意的利润。
+
+以血为例：$3.75-2.0=1.75$ 英里/点。只要一次 Doctor HEAL 的 5 点血能活到终点，
+按终局口径算值 $5\times3.75=18.75$ 英里，而补回来只花了 2.0 的价格。
+
+\smallskip
+\noindent\textbf{但 §8 那张表用的是另一套算法}，不是这张表。同一个 Doctor HEAL：
+\[
+\underbrace{5\times2.0}_{\text{按替换成本估值}}-\underbrace{3}_{\text{3 食物}}=7.0\ \text{英里}
+\]
+\textbf{两套口径都对，回答的问题不同}：终局口径问“这 5 点血最终值多少”，
+替换成本口径问“这回合赚了多少”。后者更适合逐回合做决定，所以 §8 用它。
+
+反过来说，如果伤害\textbf{补不回来}（回合不够、Doctor 死了、连续挨饿），
+就必须按终局价值 3.75 算——这正是 §7.4 里 R1 规则存在的原因。
+\end{keybox}
+
+\begin{warnbox}[title={口径不同，绝对值不同，排序也会变}]
+同一组动作，两套口径算出来的数值差很多：
+
+\begin{center}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{动作} & \textbf{终局口径} & \textbf{替换成本口径（§8）} \\
+\midrule
+DEFEND（12 点血） & 45.0 & 12.0 \\
+Doctor HEAL（5 点血） & 14.25 & 7.0 \\
+HUNT（Hunter） & 12.0 & 7.0 \\
+REST（2 点血） & 7.5 & 4.0 \\
+SCOUT & 6.0 & 6.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 差别全部来自血量的单价：终局 3.75/点，替换 2.0/点。所以\textbf{排序会变}：
+
+\noindent 两处名次变化：
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{REST 与 SCOUT 互换}：终局口径下 REST（7.5）压过 SCOUT（6.0）；
+        替换口径下反过来（4.0 对 6.0）。
+  \item \textbf{HEAL 与 HUNT 在替换口径下并列}（都是 7.0），终局口径下 HEAL 略高（14.25 对 12）。
+\end{itemize}
+\textbf{规律}：换用终局口径，\textbf{一切“加血”的动作名次上升}，“加里程”的相对下降。
+
+\textbf{实用结论}：用替换成本口径做日常决策；
+当\textbf{补血能力饱和}（Doctor 每回合只能救一个人、或连续挨饿）时切到终局口径，
+这时“回一点血”比“多走一英里”值钱得多。
+\end{warnbox}
+
 \subsection{为什么不能直接求最优}
 
 三个障碍没有变：引擎不在本地（jar 只是桩）、\texttt{Resolver} 看不到车队、随机性。
